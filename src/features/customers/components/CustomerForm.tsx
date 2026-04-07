@@ -71,7 +71,7 @@ export const CustomerForm = ({
         <CardTitle>{isEditing ? "Edit Customer" : "New Customer"}</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <div className="space-y-2">
             <Label htmlFor="customer-name">Name</Label>
             <Input id="customer-name" {...register("name")} />

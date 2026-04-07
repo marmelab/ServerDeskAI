@@ -51,7 +51,9 @@ export const CustomerList = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Customers</h1>
-        <Button onClick={() => setShowCreate(true)}>New Customer</Button>
+        <Button onClick={() => setShowCreate(true)} disabled={!companyId}>
+          New Customer
+        </Button>
       </div>
 
       {showCreate && companyId && (

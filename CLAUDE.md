@@ -145,6 +145,21 @@ tests/
 - **Test wrapper**: `src/test-utils.tsx` provides `renderWithProviders` (QueryClient + MemoryRouter) and `createTestQueryClient`.
 - **Mock `AuthProvider`** in component tests by mocking `"../AuthProvider"` with a `useAuthContext` that returns controlled values — avoids needing real Supabase auth.
 - **Prefer testing RPC call shapes** over mocking Supabase query chains — RPC mocks are simpler (`vi.fn()` on `supabase.rpc`) and verify the contract with the database.
+- **Use `userEvent.setup()`** for user interaction tests — call `const user = userEvent.setup()` then `await user.click(...)` / `await user.type(...)`. The legacy direct API (`userEvent.click(...)`) can cause timing issues.
+- **Add `noValidate` to forms** — prevents browser constraint validation from blocking react-hook-form's schema validation in tests and in the app. Always add `noValidate` to any `<form>` that uses zodResolver.
+
+### Required tests per feature
+
+Every feature module must ship with:
+
+| Test file | What to cover |
+|-----------|---------------|
+| `hooks/useFoo.test.tsx` | Query fetches data; mutation calls Supabase with correct payload (including camelCase→snake_case mapping); error propagation; cache invalidation |
+| `components/FooForm.test.tsx` | Render in create vs edit mode; validation errors for empty/invalid fields; `mutateAsync` called with correct args; `onClose` called on success; Cancel button |
+| `components/FooList.test.tsx` | Loading / error / empty states; row rendering; form toggle interactions; role guards if applicable |
+| `tests/e2e/foo.spec.ts` | Full CRUD flow logged in as the correct role; access control (wrong role cannot access the page) |
+
+Run `npm test && npm run lint && npm run build` before every commit.
 
 ## Supabase Guidelines
 

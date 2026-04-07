@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type { Customer } from "@/lib/types";
+import type { TablesInsert, TablesUpdate } from "@/lib/database.types";
 
 export const useCustomers = () => {
   return useQuery<Customer[]>({
@@ -29,9 +30,14 @@ export const useCreateCustomer = () => {
       email: string;
       companyId: string;
     }) => {
+      const payload: TablesInsert<"customers"> = {
+        name,
+        email,
+        company_id: companyId,
+      };
       const { data, error } = await supabase
         .from("customers")
-        .insert({ name, email, company_id: companyId })
+        .insert(payload)
         .select()
         .single();
       if (error) throw error;
@@ -56,9 +62,10 @@ export const useUpdateCustomer = () => {
       name: string;
       email: string;
     }) => {
+      const payload: TablesUpdate<"customers"> = { name, email };
       const { data, error } = await supabase
         .from("customers")
-        .update({ name, email })
+        .update(payload)
         .eq("id", id)
         .select()
         .single();
