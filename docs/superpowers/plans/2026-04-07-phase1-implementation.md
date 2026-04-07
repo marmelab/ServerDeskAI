@@ -110,7 +110,7 @@ src/lib/types.ts             — update with generated DB types
 **Files:**
 - Create: `supabase/migrations/00001_create_enums_and_tables.sql`
 
-- [ ] **Step 1: Write the migration SQL**
+- [x] **Step 1: Write the migration SQL**
 
 Create `supabase/migrations/00001_create_enums_and_tables.sql`:
 
@@ -210,7 +210,7 @@ CREATE INDEX idx_invites_token ON invites(token);
 CREATE INDEX idx_invites_email ON invites(email);
 ```
 
-- [ ] **Step 2: Verify migration applies**
+- [x] **Step 2: Verify migration applies**
 
 Start Supabase local (if not running) and apply:
 
@@ -221,7 +221,7 @@ npx supabase db reset
 
 Expected: Migration applies without errors. Check Supabase Studio at http://127.0.0.1:54323 to verify tables exist.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add supabase/migrations/00001_create_enums_and_tables.sql
@@ -235,7 +235,7 @@ git commit -m "feat(db): create enums and tables for ServerDesk schema"
 **Files:**
 - Create: `supabase/migrations/00002_create_rls_policies.sql`
 
-- [ ] **Step 1: Write RLS policies**
+- [x] **Step 1: Write RLS policies**
 
 Create `supabase/migrations/00002_create_rls_policies.sql`:
 
@@ -459,7 +459,7 @@ CREATE POLICY ticket_messages_insert_cm ON ticket_messages
   );
 ```
 
-- [ ] **Step 2: Apply and verify**
+- [x] **Step 2: Apply and verify**
 
 ```bash
 npx supabase db reset
@@ -467,7 +467,7 @@ npx supabase db reset
 
 Expected: Both migrations apply without errors.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add supabase/migrations/00002_create_rls_policies.sql
@@ -481,7 +481,7 @@ git commit -m "feat(db): add RLS policies for all tables"
 **Files:**
 - Create: `supabase/migrations/00003_create_signup_trigger.sql`
 
-- [ ] **Step 1: Write the trigger function**
+- [x] **Step 1: Write the trigger function**
 
 Create `supabase/migrations/00003_create_signup_trigger.sql`:
 
@@ -551,7 +551,7 @@ CREATE TRIGGER on_auth_user_created
   EXECUTE FUNCTION handle_new_user();
 ```
 
-- [ ] **Step 2: Apply and verify**
+- [x] **Step 2: Apply and verify**
 
 ```bash
 npx supabase db reset
@@ -559,7 +559,7 @@ npx supabase db reset
 
 Expected: All 3 migrations apply without errors.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add supabase/migrations/00003_create_signup_trigger.sql
@@ -575,13 +575,13 @@ git commit -m "feat(db): add signup trigger for auto-profile creation"
 - Modify: `src/lib/supabase.ts`
 - Modify: `src/lib/types.ts`
 
-- [ ] **Step 1: Generate types**
+- [x] **Step 1: Generate types**
 
 ```bash
 npx supabase gen types typescript --local > src/lib/database.types.ts
 ```
 
-- [ ] **Step 2: Update Supabase client with typed client**
+- [x] **Step 2: Update Supabase client with typed client**
 
 Replace `src/lib/supabase.ts`:
 
@@ -599,7 +599,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 ```
 
-- [ ] **Step 3: Update shared types**
+- [x] **Step 3: Update shared types**
 
 Replace `src/lib/types.ts`:
 
@@ -623,7 +623,7 @@ export type TicketPriority = Database["public"]["Enums"]["ticket_priority"];
 export type SenderType = Database["public"]["Enums"]["sender_type"];
 ```
 
-- [ ] **Step 4: Verify build**
+- [x] **Step 4: Verify build**
 
 ```bash
 npm run build
@@ -631,7 +631,7 @@ npm run build
 
 Expected: Build succeeds with no type errors.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/database.types.ts src/lib/supabase.ts src/lib/types.ts
@@ -649,7 +649,7 @@ git commit -m "feat(db): generate TypeScript types from database schema"
 - Create: `src/features/auth/hooks/useProfile.ts`
 - Create: `src/features/auth/AuthProvider.tsx`
 
-- [ ] **Step 1: Create useAuth hook**
+- [x] **Step 1: Create useAuth hook**
 
 Create `src/features/auth/hooks/useAuth.ts`:
 
@@ -689,7 +689,7 @@ export const useAuth = () => {
 };
 ```
 
-- [ ] **Step 2: Create useProfile hook**
+- [x] **Step 2: Create useProfile hook**
 
 Create `src/features/auth/hooks/useProfile.ts`:
 
@@ -716,7 +716,7 @@ export const useProfile = (userId: string | undefined) => {
 };
 ```
 
-- [ ] **Step 3: Create AuthProvider**
+- [x] **Step 3: Create AuthProvider**
 
 Create `src/features/auth/AuthProvider.tsx`:
 
@@ -786,7 +786,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 };
 ```
 
-- [ ] **Step 4: Verify build**
+- [x] **Step 4: Verify build**
 
 ```bash
 npm run build
@@ -794,7 +794,7 @@ npm run build
 
 Expected: Build succeeds. The AuthProvider is not wired into the app yet — that happens in Task 7.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/features/auth/
@@ -809,13 +809,13 @@ git commit -m "feat(auth): add AuthProvider, useAuth, and useProfile hooks"
 - Create: `src/features/auth/components/LoginForm.tsx`
 - Create: `src/features/auth/components/SignupForm.tsx`
 
-- [ ] **Step 1: Install required shadcn components**
+- [x] **Step 1: Install required shadcn components**
 
 ```bash
 npx shadcn@latest add input label card separator -y
 ```
 
-- [ ] **Step 2: Create LoginForm**
+- [x] **Step 2: Create LoginForm**
 
 Create `src/features/auth/components/LoginForm.tsx`:
 
@@ -908,7 +908,7 @@ export const LoginForm = () => {
 };
 ```
 
-- [ ] **Step 3: Create SignupForm**
+- [x] **Step 3: Create SignupForm**
 
 Create `src/features/auth/components/SignupForm.tsx`:
 
@@ -1082,7 +1082,7 @@ export const SignupForm = () => {
 };
 ```
 
-- [ ] **Step 4: Verify build**
+- [x] **Step 4: Verify build**
 
 ```bash
 npm run build
@@ -1090,7 +1090,7 @@ npm run build
 
 Expected: Build succeeds.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/features/auth/components/ src/components/ui/
@@ -1108,7 +1108,7 @@ git commit -m "feat(auth): add LoginForm and SignupForm components"
 - Modify: `src/App.tsx`
 - Modify: `src/layouts/AppLayout.tsx`
 
-- [ ] **Step 1: Create ProtectedRoute**
+- [x] **Step 1: Create ProtectedRoute**
 
 Create `src/features/auth/components/ProtectedRoute.tsx`:
 
@@ -1135,7 +1135,7 @@ export const ProtectedRoute = () => {
 };
 ```
 
-- [ ] **Step 2: Create RoleGuard**
+- [x] **Step 2: Create RoleGuard**
 
 Create `src/features/auth/components/RoleGuard.tsx`:
 
@@ -1163,7 +1163,7 @@ export const RoleGuard = ({ allowedRoles }: RoleGuardProps) => {
 };
 ```
 
-- [ ] **Step 3: Update AppLayout with role-based navigation**
+- [x] **Step 3: Update AppLayout with role-based navigation**
 
 Replace `src/layouts/AppLayout.tsx`:
 
@@ -1230,7 +1230,7 @@ export const AppLayout = () => {
 };
 ```
 
-- [ ] **Step 4: Update routes**
+- [x] **Step 4: Update routes**
 
 Replace `src/routes/index.tsx`:
 
@@ -1292,7 +1292,7 @@ export const router = createBrowserRouter([
 ]);
 ```
 
-- [ ] **Step 5: Wrap App with AuthProvider**
+- [x] **Step 5: Wrap App with AuthProvider**
 
 Replace `src/App.tsx`:
 
@@ -1322,7 +1322,7 @@ export const App = () => {
 };
 ```
 
-- [ ] **Step 6: Verify build**
+- [x] **Step 6: Verify build**
 
 ```bash
 npm run build
@@ -1330,7 +1330,7 @@ npm run build
 
 Expected: Build succeeds.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/features/auth/components/ src/routes/index.tsx src/App.tsx src/layouts/AppLayout.tsx
@@ -1350,13 +1350,13 @@ git commit -m "feat(auth): add route protection, role guards, and app wiring"
 - Create: `src/features/companies/components/CompanyList.tsx`
 - Modify: `src/routes/index.tsx`
 
-- [ ] **Step 1: Install shadcn table and dialog components**
+- [x] **Step 1: Install shadcn table and dialog components**
 
 ```bash
 npx shadcn@latest add table dialog badge textarea select -y
 ```
 
-- [ ] **Step 2: Create company types**
+- [x] **Step 2: Create company types**
 
 Create `src/features/companies/types.ts`:
 
@@ -1369,7 +1369,7 @@ export type CompanyWithCounts = Company & {
 };
 ```
 
-- [ ] **Step 3: Create useCompanies hook**
+- [x] **Step 3: Create useCompanies hook**
 
 Create `src/features/companies/hooks/useCompanies.ts`:
 
@@ -1446,7 +1446,7 @@ export const useDeleteCompany = () => {
 };
 ```
 
-- [ ] **Step 4: Create useCompany hook**
+- [x] **Step 4: Create useCompany hook**
 
 Create `src/features/companies/hooks/useCompany.ts`:
 
@@ -1473,7 +1473,7 @@ export const useCompany = (id: string | undefined) => {
 };
 ```
 
-- [ ] **Step 5: Create CompanyList component**
+- [x] **Step 5: Create CompanyList component**
 
 Create `src/features/companies/components/CompanyList.tsx`:
 
@@ -1549,7 +1549,7 @@ export const CompanyList = () => {
 };
 ```
 
-- [ ] **Step 6: Create CompanyForm component**
+- [x] **Step 6: Create CompanyForm component**
 
 Create `src/features/companies/components/CompanyForm.tsx`:
 
@@ -1617,7 +1617,7 @@ export const CompanyForm = ({ onClose }: CompanyFormProps) => {
 };
 ```
 
-- [ ] **Step 7: Wire CompanyList into routes**
+- [x] **Step 7: Wire CompanyList into routes**
 
 Update `src/routes/index.tsx` — replace the companies placeholder route:
 
@@ -1635,13 +1635,13 @@ Add the import at the top:
 import { CompanyList } from "@/features/companies/components/CompanyList";
 ```
 
-- [ ] **Step 8: Verify build**
+- [x] **Step 8: Verify build**
 
 ```bash
 npm run build
 ```
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/features/companies/ src/components/ui/ src/routes/index.tsx
@@ -1658,7 +1658,7 @@ git commit -m "feat(companies): add company list, create form, and hooks"
 - Create: `src/features/companies/hooks/useCreateInvite.ts`
 - Modify: `src/routes/index.tsx`
 
-- [ ] **Step 1: Create useCreateInvite hook**
+- [x] **Step 1: Create useCreateInvite hook**
 
 Create `src/features/companies/hooks/useCreateInvite.ts`:
 
@@ -1718,7 +1718,7 @@ export const useCreateInvite = () => {
 };
 ```
 
-- [ ] **Step 2: Create InviteCMDialog**
+- [x] **Step 2: Create InviteCMDialog**
 
 Create `src/features/companies/components/InviteCMDialog.tsx`:
 
@@ -1847,7 +1847,7 @@ export const InviteCMDialog = ({
 };
 ```
 
-- [ ] **Step 3: Create CompanyDetail**
+- [x] **Step 3: Create CompanyDetail**
 
 Create `src/features/companies/components/CompanyDetail.tsx`:
 
@@ -1963,7 +1963,7 @@ export const CompanyDetail = () => {
 };
 ```
 
-- [ ] **Step 4: Add company detail route**
+- [x] **Step 4: Add company detail route**
 
 In `src/routes/index.tsx`, add the import and route:
 
@@ -1977,13 +1977,13 @@ Add route inside the admin `RoleGuard` children, after the `/companies` route:
 { path: "/companies/:id", element: <CompanyDetail /> },
 ```
 
-- [ ] **Step 5: Verify build**
+- [x] **Step 5: Verify build**
 
 ```bash
 npm run build
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/features/companies/ src/routes/index.tsx
@@ -2004,7 +2004,7 @@ git commit -m "feat(companies): add company detail page with CM invite dialog"
 - Create: `src/features/agents/components/AssignCompaniesDialog.tsx`
 - Modify: `src/routes/index.tsx`
 
-- [ ] **Step 1: Create agent types**
+- [x] **Step 1: Create agent types**
 
 Create `src/features/agents/types.ts`:
 
@@ -2017,7 +2017,7 @@ export type AgentWithCompanies = Profile & {
 };
 ```
 
-- [ ] **Step 2: Create useAgents hook**
+- [x] **Step 2: Create useAgents hook**
 
 Create `src/features/agents/hooks/useAgents.ts`:
 
@@ -2070,7 +2070,7 @@ export const useAgents = () => {
 };
 ```
 
-- [ ] **Step 3: Create useAgentCompanies hook**
+- [x] **Step 3: Create useAgentCompanies hook**
 
 Create `src/features/agents/hooks/useAgentCompanies.ts`:
 
@@ -2118,7 +2118,7 @@ export const useUpdateAgentCompanies = () => {
 };
 ```
 
-- [ ] **Step 4: Create InviteAgentDialog**
+- [x] **Step 4: Create InviteAgentDialog**
 
 Create `src/features/agents/components/InviteAgentDialog.tsx`:
 
@@ -2276,7 +2276,7 @@ export const InviteAgentDialog = () => {
 };
 ```
 
-- [ ] **Step 5: Create AssignCompaniesDialog**
+- [x] **Step 5: Create AssignCompaniesDialog**
 
 Create `src/features/agents/components/AssignCompaniesDialog.tsx`:
 
@@ -2373,7 +2373,7 @@ export const AssignCompaniesDialog = ({
 };
 ```
 
-- [ ] **Step 6: Create AgentList**
+- [x] **Step 6: Create AgentList**
 
 Create `src/features/agents/components/AgentList.tsx`:
 
@@ -2452,7 +2452,7 @@ export const AgentList = () => {
 };
 ```
 
-- [ ] **Step 7: Wire AgentList into routes**
+- [x] **Step 7: Wire AgentList into routes**
 
 In `src/routes/index.tsx`, add the import:
 ```tsx
@@ -2464,13 +2464,13 @@ Replace the agents placeholder:
 { path: "/agents", element: <AgentList /> },
 ```
 
-- [ ] **Step 8: Verify build**
+- [x] **Step 8: Verify build**
 
 ```bash
 npm run build
 ```
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/features/agents/ src/routes/index.tsx
