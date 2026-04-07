@@ -47,7 +47,7 @@ export const AppLayout = () => {
           <p className="mb-2 truncate text-sm text-muted-foreground">
             {user?.email}
           </p>
-          <Button variant="outline" size="sm" className="w-full" onClick={signOut}>
+          <Button variant="outline" size="sm" className="w-full" onClick={() => { signOut().catch(console.error); }}>
             Sign out
           </Button>
         </div>

@@ -29,8 +29,12 @@ export const CompanyForm = ({ onClose }: CompanyFormProps) => {
   });
 
   const onSubmit = async (values: CompanyValues) => {
-    await createCompany.mutateAsync(values.name);
-    onClose();
+    try {
+      await createCompany.mutateAsync(values.name);
+      onClose();
+    } catch {
+      // Error is handled by mutation state
+    }
   };
 
   return (
@@ -46,6 +50,9 @@ export const CompanyForm = ({ onClose }: CompanyFormProps) => {
             />
             {errors.name && (
               <p className="text-sm text-destructive">{errors.name.message}</p>
+            )}
+            {createCompany.error && (
+              <p className="text-sm text-destructive">{createCompany.error.message}</p>
             )}
           </div>
           <Button type="submit" disabled={createCompany.isPending}>

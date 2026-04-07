@@ -47,12 +47,16 @@ export const InviteAgentDialog = () => {
   };
 
   const onSubmit = async (values: InviteValues) => {
-    const result = await createInvite.mutateAsync({
-      email: values.email,
-      role: "agent",
-      companyIds: selectedCompanies,
-    });
-    setInviteLink(`${window.location.origin}/signup/${result.token}`);
+    try {
+      const result = await createInvite.mutateAsync({
+        email: values.email,
+        role: "agent",
+        companyIds: selectedCompanies,
+      });
+      setInviteLink(`${window.location.origin}/signup/${result.token}`);
+    } catch {
+      // Error is handled by mutation state
+    }
   };
 
   const handleCopy = async () => {
@@ -134,6 +138,9 @@ export const InviteAgentDialog = () => {
                 )}
               </div>
             </div>
+            {createInvite.error && (
+              <p className="text-sm text-destructive">{createInvite.error.message}</p>
+            )}
             <Button
               type="submit"
               className="w-full"

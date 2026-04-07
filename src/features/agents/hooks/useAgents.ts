@@ -15,25 +15,27 @@ export const useAgents = () => {
 
       if (profilesError) throw profilesError;
 
-      // Get user_companies and companies for each agent
-      const agents: AgentWithCompanies[] = [];
+      const agentUserIds = profiles.map((p) => p.user_id);
 
-      for (const profile of profiles) {
-        const { data: userCompanies } = await supabase
-          .from("user_companies")
-          .select("company_id, companies(*)")
-          .eq("user_id", profile.user_id);
+      const { data: userCompanies, error: ucError } = await supabase
+        .from("user_companies")
+        .select("user_id, companies(*)")
+        .in("user_id", agentUserIds);
 
-        agents.push({
-          ...profile,
-          companies:
-            userCompanies?.map(
-              (uc) => uc.companies as unknown as AgentWithCompanies["companies"][number],
-            ) ?? [],
-        });
+      if (ucError) throw ucError;
+
+      const companiesByAgent = new Map<string, AgentWithCompanies["companies"]>();
+      for (const uc of userCompanies ?? []) {
+        if (!uc.companies) continue;
+        const existing = companiesByAgent.get(uc.user_id) ?? [];
+        existing.push(uc.companies as AgentWithCompanies["companies"][number]);
+        companiesByAgent.set(uc.user_id, existing);
       }
 
-      return agents;
+      return profiles.map((profile) => ({
+        ...profile,
+        companies: companiesByAgent.get(profile.user_id) ?? [],
+      }));
     },
   });
 };

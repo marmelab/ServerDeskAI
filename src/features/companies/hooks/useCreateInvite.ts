@@ -27,7 +27,10 @@ export const useCreateInvite = () => {
           email,
           role,
           token,
-          invited_by: (await supabase.auth.getUser()).data.user!.id,
+          invited_by: await supabase.auth.getUser().then(({ data: { user } }) => {
+            if (!user) throw new Error("Not authenticated");
+            return user.id;
+          }),
           expires_at: expiresAt.toISOString(),
         })
         .select()

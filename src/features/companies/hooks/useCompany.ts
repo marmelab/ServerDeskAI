@@ -3,14 +3,13 @@ import { supabase } from "@/lib/supabase";
 import type { Company } from "@/lib/types";
 
 export const useCompany = (id: string | undefined) => {
-  return useQuery<Company | null>({
+  return useQuery<Company>({
     queryKey: ["company", id],
     queryFn: async () => {
-      if (!id) return null;
       const { data, error } = await supabase
         .from("companies")
         .select("*")
-        .eq("id", id)
+        .eq("id", id!)
         .single();
       if (error) throw error;
       return data;

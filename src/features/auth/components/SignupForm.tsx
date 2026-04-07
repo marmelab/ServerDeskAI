@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -88,7 +88,7 @@ export const SignupForm = () => {
   const onSubmit = async (values: SignupValues) => {
     try {
       setError(null);
-      await signUp(values.email, values.password, values.name);
+      await signUp(values.email, values.password, values.name, token);
       navigate("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed");

@@ -42,7 +42,7 @@ export const useUpdateCompany = () => {
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
       const { data, error } = await supabase
         .from("companies")
-        .update({ name, updated_at: new Date().toISOString() })
+        .update({ name })
         .eq("id", id)
         .select()
         .single();

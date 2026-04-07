@@ -39,11 +39,15 @@ export const AssignCompaniesDialog = ({
   };
 
   const handleSave = async () => {
-    await updateCompanies.mutateAsync({
-      agentId: agent.user_id,
-      companyIds: selectedIds,
-    });
-    setOpen(false);
+    try {
+      await updateCompanies.mutateAsync({
+        agentId: agent.user_id,
+        companyIds: selectedIds,
+      });
+      setOpen(false);
+    } catch {
+      // Error is handled by mutation state
+    }
   };
 
   return (
@@ -74,6 +78,9 @@ export const AssignCompaniesDialog = ({
               ))}
             </div>
           </div>
+          {updateCompanies.error && (
+            <p className="text-sm text-destructive">{updateCompanies.error.message}</p>
+          )}
           <Button
             className="w-full"
             onClick={handleSave}

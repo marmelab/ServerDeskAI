@@ -103,6 +103,28 @@ tests/
 - Use Tanstack Query (React Query) for server state management.
 - Form validation with zod + react-hook-form.
 
+## Linting
+
+- **Always run `npm run lint` before considering work complete.** Fix all errors before committing.
+- ESLint flat config (`eslint.config.js`) with TypeScript-ESLint, React Hooks, and React Refresh plugins.
+- **TypeScript-ESLint (recommended rules)**:
+  - No `any` types — use proper types or `unknown`.
+  - No unused variables — remove them or prefix with `_` only if genuinely needed (e.g., rest patterns).
+  - No explicit return types required, but inferred types must be correct.
+  - No `@ts-ignore` — use `@ts-expect-error` with a comment if suppression is truly necessary.
+  - No non-null assertions (`!`) unless you can prove the value is defined.
+- **React Hooks rules**:
+  - All hooks must follow the Rules of Hooks (no conditional hooks, no hooks in loops).
+  - Exhaustive deps in `useEffect`, `useMemo`, `useCallback` — do not suppress the lint warning without a documented reason.
+- **React Refresh**:
+  - Only export React components from `.tsx` files that use Fast Refresh. Do not mix component exports with non-component exports in the same file.
+- **General**:
+  - No `console.log` in committed code — use a proper logger or remove before committing.
+  - No `var` — use `const` or `let`.
+  - Prefer `const` over `let` when the variable is never reassigned.
+  - No unreachable code after `return`, `throw`, `break`, or `continue`.
+  - Run `npm run lint:fix` for auto-fixable issues, then manually fix the rest.
+
 ## Testing
 
 - **Unit tests**: Vitest — test hooks, utilities, and component logic.

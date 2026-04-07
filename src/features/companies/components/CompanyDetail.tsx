@@ -43,14 +43,22 @@ export const CompanyDetail = () => {
   }
 
   const onSubmit = async (values: EditValues) => {
-    await updateCompany.mutateAsync({ id: company.id, name: values.name });
-    setEditing(false);
+    try {
+      await updateCompany.mutateAsync({ id: company.id, name: values.name });
+      setEditing(false);
+    } catch {
+      // Error is handled by mutation state
+    }
   };
 
   const handleDelete = async () => {
     if (confirm("Delete this company? This will also delete all related data.")) {
-      await deleteCompany.mutateAsync(company.id);
-      navigate("/companies");
+      try {
+        await deleteCompany.mutateAsync(company.id);
+        navigate("/companies");
+      } catch {
+        // Error is handled by mutation state
+      }
     }
   };
 
@@ -68,6 +76,13 @@ export const CompanyDetail = () => {
           </Button>
         </div>
       </div>
+
+      {updateCompany.error && (
+        <p className="text-sm text-destructive">{updateCompany.error.message}</p>
+      )}
+      {deleteCompany.error && (
+        <p className="text-sm text-destructive">{deleteCompany.error.message}</p>
+      )}
 
       {editing && (
         <Card>

@@ -13,11 +13,15 @@ import { useCompanies } from "../hooks/useCompanies";
 import { CompanyForm } from "./CompanyForm";
 
 export const CompanyList = () => {
-  const { data: companies, isLoading } = useCompanies();
+  const { data: companies, isLoading, isError, error } = useCompanies();
   const [showCreate, setShowCreate] = useState(false);
 
   if (isLoading) {
     return <p className="text-muted-foreground">Loading companies...</p>;
+  }
+
+  if (isError) {
+    return <p className="text-destructive">Failed to load companies: {error.message}</p>;
   }
 
   return (

@@ -13,12 +13,13 @@ export const useAuth = () => {
     email: string,
     password: string,
     name: string,
+    token?: string,
   ) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name },
+        data: { name, ...(token ? { invite_token: token } : {}) },
       },
     });
     if (error) throw error;

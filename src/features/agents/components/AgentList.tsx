@@ -12,10 +12,14 @@ import { InviteAgentDialog } from "./InviteAgentDialog";
 import { AssignCompaniesDialog } from "./AssignCompaniesDialog";
 
 export const AgentList = () => {
-  const { data: agents, isLoading } = useAgents();
+  const { data: agents, isLoading, isError, error } = useAgents();
 
   if (isLoading) {
     return <p className="text-muted-foreground">Loading agents...</p>;
+  }
+
+  if (isError) {
+    return <p className="text-destructive">Failed to load agents: {error.message}</p>;
   }
 
   return (
