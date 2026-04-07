@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { useCreateCompany } from "../hooks/useCompanies";
+import { useCreateCompany } from "../hooks/useCreateCompany";
 
 const companySchema = z.object({
   name: z.string().min(1, "Company name is required"),

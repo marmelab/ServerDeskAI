@@ -4,12 +4,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode } from "react";
 import { useCreateInvite } from "./useCreateInvite";
 
-const mockRpc = vi.fn();
+const mockCreateInvite = vi.fn();
 
-vi.mock("@/lib/supabase", () => ({
-  supabase: {
-    rpc: (...args: unknown[]) => mockRpc(...args),
-  },
+vi.mock("../services/invites", () => ({
+  createInvite: (args: unknown) => mockCreateInvite(args),
+  validateInvite: vi.fn(),
 }));
 
 const createWrapper = () => {
@@ -22,103 +21,31 @@ const createWrapper = () => {
 };
 
 describe("useCreateInvite", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+  beforeEach(() => vi.clearAllMocks());
 
-  it("calls the create_invite RPC with correct params", async () => {
-    mockRpc.mockResolvedValue({
-      data: [{ invite_id: "inv-1", token: "generated-token-abc" }],
-      error: null,
-    });
+  it("calls createInvite service with correct params", async () => {
+    mockCreateInvite.mockResolvedValue({ invite: { id: "inv-1" }, token: "tok-abc" });
 
-    const { result } = renderHook(() => useCreateInvite(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useCreateInvite(), { wrapper: createWrapper() });
 
-    result.current.mutate({
-      email: "agent@example.com",
-      role: "agent",
-      companyIds: ["company-1"],
-    });
+    result.current.mutate({ email: "agent@example.com", role: "agent", companyIds: ["co1"] });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-    expect(mockRpc).toHaveBeenCalledWith("create_invite", {
-      p_email: "agent@example.com",
-      p_role: "agent",
-      p_company_ids: ["company-1"],
-    } as Record<string, unknown>);
-
-    expect(result.current.data).toEqual({
-      invite: { id: "inv-1" },
-      token: "generated-token-abc",
-    });
-  });
-
-  it("omits p_company_ids when companyIds is empty", async () => {
-    mockRpc.mockResolvedValue({
-      data: [{ invite_id: "inv-2", token: "token-no-companies" }],
-      error: null,
-    });
-
-    const { result } = renderHook(() => useCreateInvite(), {
-      wrapper: createWrapper(),
-    });
-
-    result.current.mutate({
+    expect(mockCreateInvite).toHaveBeenCalledWith({
       email: "agent@example.com",
       role: "agent",
-      companyIds: [],
+      companyIds: ["co1"],
     });
-
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-    expect(mockRpc).toHaveBeenCalledWith("create_invite", {
-      p_email: "agent@example.com",
-      p_role: "agent",
-    } as Record<string, unknown>);
+    expect(result.current.data).toEqual({ invite: { id: "inv-1" }, token: "tok-abc" });
   });
 
-  it("handles RPC error", async () => {
-    mockRpc.mockResolvedValue({
-      data: null,
-      error: { message: "Only admins can create invites" },
-    });
+  it("handles service error", async () => {
+    mockCreateInvite.mockRejectedValue(new Error("Only admins can create invites"));
 
-    const { result } = renderHook(() => useCreateInvite(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useCreateInvite(), { wrapper: createWrapper() });
 
-    result.current.mutate({
-      email: "test@example.com",
-      role: "customer_manager",
-      companyIds: [],
-    });
+    result.current.mutate({ email: "test@x.com", role: "customer_manager", companyIds: [] });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(result.current.error).toEqual({
-      message: "Only admins can create invites",
-    });
-  });
-
-  it("handles empty data response", async () => {
-    mockRpc.mockResolvedValue({ data: [], error: null });
-
-    const { result } = renderHook(() => useCreateInvite(), {
-      wrapper: createWrapper(),
-    });
-
-    result.current.mutate({
-      email: "test@example.com",
-      role: "agent",
-      companyIds: [],
-    });
-
-    await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(result.current.error).toBeInstanceOf(Error);
-    expect((result.current.error as Error).message).toBe(
-      "Failed to create invite",
-    );
   });
 });

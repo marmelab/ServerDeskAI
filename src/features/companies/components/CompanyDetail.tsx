@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCompany } from "../hooks/useCompany";
-import { useUpdateCompany, useDeleteCompany } from "../hooks/useCompanies";
+import { useUpdateCompany } from "../hooks/useUpdateCompany";
+import { useDeleteCompany } from "../hooks/useDeleteCompany";
 import { InviteCMDialog } from "./InviteCMDialog";
 
 const editSchema = z.object({
