@@ -168,6 +168,7 @@ Run `npm test && npm run lint && npm run build` before every commit.
 - Use database triggers (PL/pgSQL) for side effects (e.g., auto-creating profile on signup).
 - Use Edge Functions for email webhook processing and sending.
 - Migrations go in `supabase/migrations/` with descriptive names.
+- **After writing any new migration, always run `npx supabase db reset` immediately** — do not wait for the user to ask. This applies the migration and re-seeds the local database so changes take effect right away.
 - Run `supabase db push` to apply migrations locally, `supabase db reset` to reset.
 
 ### RLS Security Rules
