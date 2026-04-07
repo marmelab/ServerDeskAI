@@ -39,6 +39,6 @@ export const updateCompany = async ({ id, name }: { id: string; name: string }):
 };
 
 export const deleteCompany = async (id: string): Promise<void> => {
-  const { error } = await supabase.from("companies").delete().eq("id", id).select().single();
+  const { error } = await supabase.from("companies").delete().eq("id", id);
   if (error) throw error;
 };

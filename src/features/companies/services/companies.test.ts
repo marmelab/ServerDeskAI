@@ -15,6 +15,9 @@ const makeChain = (resolve: unknown) => {
   chain.eq = vi.fn().mockReturnValue(chain);
   chain.order = vi.fn().mockResolvedValue(resolve);
   chain.single = vi.fn().mockResolvedValue(resolve);
+  // Make the chain itself thenable so it resolves when awaited directly
+  // (e.g. deleteCompany which ends at .eq() without .single())
+  chain.then = vi.fn((onFulfilled: (v: unknown) => unknown) => Promise.resolve(resolve).then(onFulfilled));
   return chain;
 };
 
