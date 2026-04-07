@@ -2,18 +2,16 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useAuth } from "./useAuth";
 
-const mockSignInWithPassword = vi.fn();
+const mockSignIn = vi.fn();
 const mockSignUp = vi.fn();
 const mockSignOut = vi.fn();
 
-vi.mock("@/lib/supabase", () => ({
-  supabase: {
-    auth: {
-      signInWithPassword: (...args: unknown[]) => mockSignInWithPassword(...args),
-      signUp: (...args: unknown[]) => mockSignUp(...args),
-      signOut: () => mockSignOut(),
-    },
-  },
+vi.mock("../services/auth", () => ({
+  signIn: (...args: unknown[]) => mockSignIn(...args),
+  signUp: (...args: unknown[]) => mockSignUp(...args),
+  signOut: () => mockSignOut(),
+  getSession: vi.fn(),
+  onAuthStateChange: vi.fn(),
 }));
 
 describe("useAuth", () => {
@@ -22,22 +20,20 @@ describe("useAuth", () => {
   });
 
   describe("signIn", () => {
-    it("calls supabase signInWithPassword with email and password", async () => {
-      mockSignInWithPassword.mockResolvedValue({ error: null });
+    it("calls signIn with email and password", async () => {
+      mockSignIn.mockResolvedValue(undefined);
       const { result } = renderHook(() => useAuth());
 
       await result.current.signIn("test@example.com", "password123");
 
-      expect(mockSignInWithPassword).toHaveBeenCalledWith({
-        email: "test@example.com",
-        password: "password123",
-      });
+      expect(mockSignIn).toHaveBeenCalledWith(
+        "test@example.com",
+        "password123",
+      );
     });
 
-    it("throws on supabase error", async () => {
-      mockSignInWithPassword.mockResolvedValue({
-        error: new Error("Invalid credentials"),
-      });
+    it("throws on service error", async () => {
+      mockSignIn.mockRejectedValue(new Error("Invalid credentials"));
       const { result } = renderHook(() => useAuth());
 
       await expect(
@@ -47,21 +43,21 @@ describe("useAuth", () => {
   });
 
   describe("signUp", () => {
-    it("calls supabase signUp with email, password, and name", async () => {
-      mockSignUp.mockResolvedValue({ error: null });
+    it("calls signUp with email, password, and name", async () => {
+      mockSignUp.mockResolvedValue(undefined);
       const { result } = renderHook(() => useAuth());
 
       await result.current.signUp("test@example.com", "password123", "Test User");
 
-      expect(mockSignUp).toHaveBeenCalledWith({
-        email: "test@example.com",
-        password: "password123",
-        options: { data: { name: "Test User" } },
-      });
+      expect(mockSignUp).toHaveBeenCalledWith(
+        "test@example.com",
+        "password123",
+        "Test User",
+      );
     });
 
-    it("includes invite_token in metadata when provided", async () => {
-      mockSignUp.mockResolvedValue({ error: null });
+    it("includes invite_token when provided", async () => {
+      mockSignUp.mockResolvedValue(undefined);
       const { result } = renderHook(() => useAuth());
 
       await result.current.signUp(
@@ -71,19 +67,16 @@ describe("useAuth", () => {
         "abc-invite-token",
       );
 
-      expect(mockSignUp).toHaveBeenCalledWith({
-        email: "test@example.com",
-        password: "password123",
-        options: {
-          data: { name: "Test User", invite_token: "abc-invite-token" },
-        },
-      });
+      expect(mockSignUp).toHaveBeenCalledWith(
+        "test@example.com",
+        "password123",
+        "Test User",
+        "abc-invite-token",
+      );
     });
 
-    it("throws on supabase error", async () => {
-      mockSignUp.mockResolvedValue({
-        error: new Error("Email already registered"),
-      });
+    it("throws on service error", async () => {
+      mockSignUp.mockRejectedValue(new Error("Email already registered"));
       const { result } = renderHook(() => useAuth());
 
       await expect(
@@ -93,8 +86,8 @@ describe("useAuth", () => {
   });
 
   describe("signOut", () => {
-    it("calls supabase signOut", async () => {
-      mockSignOut.mockResolvedValue({ error: null });
+    it("calls signOut", async () => {
+      mockSignOut.mockResolvedValue(undefined);
       const { result } = renderHook(() => useAuth());
 
       await result.current.signOut();
@@ -102,10 +95,8 @@ describe("useAuth", () => {
       expect(mockSignOut).toHaveBeenCalled();
     });
 
-    it("throws on supabase error", async () => {
-      mockSignOut.mockResolvedValue({
-        error: new Error("Network error"),
-      });
+    it("throws on service error", async () => {
+      mockSignOut.mockRejectedValue(new Error("Network error"));
       const { result } = renderHook(() => useAuth());
 
       await expect(result.current.signOut()).rejects.toThrow("Network error");

@@ -74,32 +74,15 @@ describe("AuthProvider", () => {
     });
   });
 
-  it("subscribes to auth state changes and calls unsubscribe on unmount", () => {
-    const unsubscribeFn = vi.fn();
+  it("subscribes to auth state changes on mount", () => {
     mockGetSession.mockResolvedValue(null);
-    mockOnAuthStateChange.mockImplementation(() => {});
 
-    // Override the mock for this test to capture the unsubscribe fn
-    vi.doMock("./services/auth", () => ({
-      getSession: () => mockGetSession(),
-      onAuthStateChange: (...args: unknown[]) => {
-        mockOnAuthStateChange(...args);
-        return { unsubscribe: unsubscribeFn };
-      },
-      signIn: vi.fn(),
-      signUp: vi.fn(),
-      signOut: vi.fn(),
-    }));
-
-    const { unmount } = renderWithProviders(
+    renderWithProviders(
       <AuthProvider>
         <AuthConsumer />
       </AuthProvider>,
     );
 
     expect(mockOnAuthStateChange).toHaveBeenCalledTimes(1);
-    unmount();
-    // Note: vi.doMock doesn't hot-replace already-loaded modules in the same test file,
-    // so unsubscribeFn may not be called here. The original test verified subscribe is called.
   });
 });
