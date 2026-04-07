@@ -1,20 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { fetchProfile } from "../services/profile";
 import type { Profile } from "@/lib/types";
 
-export const useProfile = (userId: string | undefined) => {
-  return useQuery<Profile>({
+export const useProfile = (userId: string | undefined) =>
+  useQuery<Profile>({
     queryKey: ["profile", userId],
-    queryFn: async () => {
+    queryFn: () => {
       if (!userId) throw new Error("userId is required");
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
-      if (error) throw error;
-      return data;
+      return fetchProfile(userId);
     },
     enabled: !!userId,
   });
-};
