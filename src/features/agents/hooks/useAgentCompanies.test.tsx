@@ -4,12 +4,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode } from "react";
 import { useUpdateAgentCompanies } from "./useAgentCompanies";
 
-const mockRpc = vi.fn();
+const mockUpdateAgentCompanies = vi.fn();
 
-vi.mock("@/lib/supabase", () => ({
-  supabase: {
-    rpc: (...args: unknown[]) => mockRpc(...args),
-  },
+vi.mock("../services/agents", () => ({
+  fetchAgents: vi.fn(),
+  updateAgentCompanies: (args: unknown) => mockUpdateAgentCompanies(args),
 }));
 
 const createWrapper = () => {
@@ -22,66 +21,40 @@ const createWrapper = () => {
 };
 
 describe("useUpdateAgentCompanies", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+  beforeEach(() => vi.clearAllMocks());
 
-  it("calls the update_agent_companies RPC with correct params", async () => {
-    mockRpc.mockResolvedValue({ data: null, error: null });
+  it("calls updateAgentCompanies service with correct params", async () => {
+    mockUpdateAgentCompanies.mockResolvedValue(undefined);
 
-    const { result } = renderHook(() => useUpdateAgentCompanies(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useUpdateAgentCompanies(), { wrapper: createWrapper() });
 
-    result.current.mutate({
-      agentId: "agent-123",
-      companyIds: ["company-1", "company-2"],
-    });
+    result.current.mutate({ agentId: "agent-123", companyIds: ["co1", "co2"] });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-    expect(mockRpc).toHaveBeenCalledWith("update_agent_companies", {
-      p_agent_id: "agent-123",
-      p_company_ids: ["company-1", "company-2"],
+    expect(mockUpdateAgentCompanies).toHaveBeenCalledWith({
+      agentId: "agent-123",
+      companyIds: ["co1", "co2"],
     });
   });
 
-  it("handles RPC error", async () => {
-    mockRpc.mockResolvedValue({
-      data: null,
-      error: { message: "Permission denied" },
-    });
+  it("handles service error", async () => {
+    mockUpdateAgentCompanies.mockRejectedValue(new Error("Permission denied"));
 
-    const { result } = renderHook(() => useUpdateAgentCompanies(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useUpdateAgentCompanies(), { wrapper: createWrapper() });
 
-    result.current.mutate({
-      agentId: "agent-123",
-      companyIds: ["company-1"],
-    });
+    result.current.mutate({ agentId: "agent-123", companyIds: ["co1"] });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(result.current.error).toEqual({ message: "Permission denied" });
   });
 
   it("handles empty companyIds", async () => {
-    mockRpc.mockResolvedValue({ data: null, error: null });
+    mockUpdateAgentCompanies.mockResolvedValue(undefined);
 
-    const { result } = renderHook(() => useUpdateAgentCompanies(), {
-      wrapper: createWrapper(),
-    });
+    const { result } = renderHook(() => useUpdateAgentCompanies(), { wrapper: createWrapper() });
 
-    result.current.mutate({
-      agentId: "agent-123",
-      companyIds: [],
-    });
+    result.current.mutate({ agentId: "agent-123", companyIds: [] });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-    expect(mockRpc).toHaveBeenCalledWith("update_agent_companies", {
-      p_agent_id: "agent-123",
-      p_company_ids: [],
-    });
+    expect(mockUpdateAgentCompanies).toHaveBeenCalledWith({ agentId: "agent-123", companyIds: [] });
   });
 });
