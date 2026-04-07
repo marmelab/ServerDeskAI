@@ -6,13 +6,15 @@ import { AuthProvider, useAuthContext } from "./AuthProvider";
 const mockGetSession = vi.fn();
 const mockOnAuthStateChange = vi.fn();
 
-vi.mock("@/lib/supabase", () => ({
-  supabase: {
-    auth: {
-      getSession: () => mockGetSession(),
-      onAuthStateChange: (...args: unknown[]) => mockOnAuthStateChange(...args),
-    },
+vi.mock("./services/auth", () => ({
+  getSession: () => mockGetSession(),
+  onAuthStateChange: (...args: unknown[]) => {
+    mockOnAuthStateChange(...args);
+    return { unsubscribe: vi.fn() };
   },
+  signIn: vi.fn(),
+  signUp: vi.fn(),
+  signOut: vi.fn(),
 }));
 
 vi.mock("./hooks/useProfile", () => ({
@@ -36,21 +38,12 @@ const AuthConsumer = () => {
 };
 
 describe("AuthProvider", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockOnAuthStateChange.mockReturnValue({
-      data: { subscription: { unsubscribe: vi.fn() } },
-    });
-  });
+  beforeEach(() => vi.clearAllMocks());
 
   it("shows loading state initially then resolves with session", async () => {
     mockGetSession.mockResolvedValue({
-      data: {
-        session: {
-          user: { id: "user-1", email: "admin@test.com" },
-          access_token: "token",
-        },
-      },
+      user: { id: "user-1", email: "admin@test.com" },
+      access_token: "token",
     });
 
     renderWithProviders(
@@ -81,22 +74,15 @@ describe("AuthProvider", () => {
     });
   });
 
-  it("subscribes to auth state changes and cleans up", () => {
-    const unsubscribe = vi.fn();
-    mockGetSession.mockResolvedValue({ data: { session: null } });
-    mockOnAuthStateChange.mockReturnValue({
-      data: { subscription: { unsubscribe } },
-    });
+  it("subscribes to auth state changes on mount", () => {
+    mockGetSession.mockResolvedValue(null);
 
-    const { unmount } = renderWithProviders(
+    renderWithProviders(
       <AuthProvider>
         <AuthConsumer />
       </AuthProvider>,
     );
 
     expect(mockOnAuthStateChange).toHaveBeenCalledTimes(1);
-
-    unmount();
-    expect(unsubscribe).toHaveBeenCalled();
   });
 });

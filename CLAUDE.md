@@ -108,6 +108,13 @@ tests/
 - Never use `as unknown as T` double casts — fix the query or type definition instead.
 - Prefer single joined queries over N+1 loops (e.g., fetch all related rows with `.in()` instead of per-item queries in a `for` loop).
 
+### Hooks / Services Architecture
+
+- **Services** (`src/features/[feature]/services/[domain].ts`) — plain `async` functions that call Supabase. They have no React dependencies. One file per data domain (e.g., `customers.ts`, `companies.ts`, `invites.ts`).
+- **Hooks** (`src/features/[feature]/hooks/use[Action].ts`) — one file per action/query. Import **only** from the feature's service files, never from `@/lib/supabase` directly.
+- Components import hooks; hooks import services; services import `@/lib/supabase`. No layer skips.
+- **Testing**: hook tests mock the service module (`vi.mock("../services/[domain]", ...)`). Service tests mock `@/lib/supabase`. Never mock supabase in hook tests. Service test files live colocated with the service at `src/features/[feature]/services/[domain].test.ts`.
+
 ## Linting
 
 - **Always run `npm run lint` before considering work complete.** Fix all errors before committing.
@@ -140,7 +147,7 @@ tests/
   - Test files in `tests/e2e/`.
 - Write tests for all business logic and critical user paths.
 - **Unit test files with JSX must use `.test.tsx`** (not `.test.ts`) — Vite/OXC won't parse JSX in `.ts` files.
-- **Mock `@/lib/supabase`** in unit tests — all hooks import supabase directly, so mock the module with `vi.mock("@/lib/supabase", ...)`.
+- **Mocking strategy**: hook tests mock the service module (`vi.mock("../services/[domain]", ...)`) — hooks no longer import supabase directly. Service tests mock `@/lib/supabase` (`vi.mock("@/lib/supabase", ...)`). Never mock supabase directly in hook tests.
 - **Use `@testing-library/react` `renderHook`** for testing React Query hooks — wrap with `QueryClientProvider` (retry: false for deterministic tests).
 - **Test wrapper**: `src/test-utils.tsx` provides `renderWithProviders` (QueryClient + MemoryRouter) and `createTestQueryClient`.
 - **Mock `AuthProvider`** in component tests by mocking `"../AuthProvider"` with a `useAuthContext` that returns controlled values — avoids needing real Supabase auth.

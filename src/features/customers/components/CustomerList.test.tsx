@@ -5,12 +5,6 @@ import { renderWithProviders } from "@/test-utils";
 import { CustomerList } from "./CustomerList";
 import type { Customer } from "@/lib/types";
 
-// Mock supabase for the inline user_companies query
-const mockFrom = vi.fn();
-vi.mock("@/lib/supabase", () => ({
-  supabase: { from: (...args: unknown[]) => mockFrom(...args) },
-}));
-
 // Mock AuthProvider
 vi.mock("@/features/auth/AuthProvider", () => ({
   useAuthContext: () => ({ user: { id: "user-1" } }),
@@ -20,7 +14,19 @@ vi.mock("@/features/auth/AuthProvider", () => ({
 const mockUseCustomers = vi.fn();
 vi.mock("../hooks/useCustomers", () => ({
   useCustomers: () => mockUseCustomers(),
+}));
+
+// Mock useUserCompany hook
+const mockUseUserCompany = vi.fn();
+vi.mock("../hooks/useUserCompany", () => ({
+  useUserCompany: () => mockUseUserCompany(),
+}));
+
+// Mock useCreateCustomer and useUpdateCustomer (used by CustomerForm)
+vi.mock("../hooks/useCreateCustomer", () => ({
   useCreateCustomer: () => ({ mutateAsync: vi.fn(), isPending: false, error: null }),
+}));
+vi.mock("../hooks/useUpdateCustomer", () => ({
   useUpdateCustomer: () => ({ mutateAsync: vi.fn(), isPending: false, error: null }),
 }));
 
@@ -29,23 +35,12 @@ const CUSTOMERS: Customer[] = [
   { id: "c2", name: "Bob Jones", email: "bob@acme.com", company_id: "co1", created_at: "2026-02-01T00:00:00Z" },
 ];
 
-const makeUserCompanyChain = (companyId: string | null) => {
-  const chain: Record<string, unknown> = {};
-  chain.select = vi.fn().mockReturnValue(chain);
-  chain.eq = vi.fn().mockReturnValue(chain);
-  chain.single = vi.fn().mockResolvedValue({
-    data: companyId ? { company_id: companyId } : null,
-    error: null,
-  });
-  return chain;
-};
-
 describe("CustomerList", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("shows loading state", () => {
     mockUseCustomers.mockReturnValue({ isLoading: true, isError: false, data: undefined, error: null });
-    mockFrom.mockReturnValue(makeUserCompanyChain("co1"));
+    mockUseUserCompany.mockReturnValue({ data: { company_id: "co1" } });
 
     renderWithProviders(<CustomerList />);
     expect(screen.getByText("Loading customers...")).toBeTruthy();
@@ -58,7 +53,7 @@ describe("CustomerList", () => {
       data: undefined,
       error: { message: "Permission denied" },
     });
-    mockFrom.mockReturnValue(makeUserCompanyChain("co1"));
+    mockUseUserCompany.mockReturnValue({ data: { company_id: "co1" } });
 
     renderWithProviders(<CustomerList />);
     expect(screen.getByText("Permission denied")).toBeTruthy();
@@ -66,7 +61,7 @@ describe("CustomerList", () => {
 
   it("shows empty state", async () => {
     mockUseCustomers.mockReturnValue({ isLoading: false, isError: false, data: [], error: null });
-    mockFrom.mockReturnValue(makeUserCompanyChain("co1"));
+    mockUseUserCompany.mockReturnValue({ data: { company_id: "co1" } });
 
     renderWithProviders(<CustomerList />);
     await waitFor(() => expect(screen.getByText("No customers yet")).toBeTruthy());
@@ -74,7 +69,7 @@ describe("CustomerList", () => {
 
   it("renders a row per customer with name and email", async () => {
     mockUseCustomers.mockReturnValue({ isLoading: false, isError: false, data: CUSTOMERS, error: null });
-    mockFrom.mockReturnValue(makeUserCompanyChain("co1"));
+    mockUseUserCompany.mockReturnValue({ data: { company_id: "co1" } });
 
     renderWithProviders(<CustomerList />);
     await waitFor(() => expect(screen.getByText("Alice Smith")).toBeTruthy());
@@ -85,12 +80,7 @@ describe("CustomerList", () => {
 
   it("New Customer button is disabled while companyId is loading", async () => {
     mockUseCustomers.mockReturnValue({ isLoading: false, isError: false, data: [], error: null });
-    // userCompany query returns null (loading / unresolved)
-    const chain: Record<string, unknown> = {};
-    chain.select = vi.fn().mockReturnValue(chain);
-    chain.eq = vi.fn().mockReturnValue(chain);
-    chain.single = vi.fn().mockReturnValue(new Promise(() => {})); // never resolves
-    mockFrom.mockReturnValue(chain);
+    mockUseUserCompany.mockReturnValue({ data: undefined });
 
     renderWithProviders(<CustomerList />);
     await waitFor(() => {
@@ -101,7 +91,7 @@ describe("CustomerList", () => {
 
   it("New Customer button enabled when companyId resolves, and clicking shows form", async () => {
     mockUseCustomers.mockReturnValue({ isLoading: false, isError: false, data: CUSTOMERS, error: null });
-    mockFrom.mockReturnValue(makeUserCompanyChain("co1"));
+    mockUseUserCompany.mockReturnValue({ data: { company_id: "co1" } });
 
     renderWithProviders(<CustomerList />);
     const btn = await screen.findByRole("button", { name: "New Customer" });
@@ -112,7 +102,7 @@ describe("CustomerList", () => {
 
   it("clicking Edit shows pre-filled form for that customer", async () => {
     mockUseCustomers.mockReturnValue({ isLoading: false, isError: false, data: CUSTOMERS, error: null });
-    mockFrom.mockReturnValue(makeUserCompanyChain("co1"));
+    mockUseUserCompany.mockReturnValue({ data: { company_id: "co1" } });
 
     renderWithProviders(<CustomerList />);
     await waitFor(() => expect(screen.getByText("Alice Smith")).toBeTruthy());

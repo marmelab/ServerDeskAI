@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import type { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
+import { getSession, onAuthStateChange } from "./services/auth";
 import { useProfile } from "./hooks/useProfile";
 import type { Profile } from "@/lib/types";
 
@@ -32,35 +32,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    getSession()
+      .then((session) => {
+        setSession(session);
+        setLoading(false);
+      })
+      .catch(() => {
+        setSession(null);
+        setLoading(false);
+      });
+
+    const { unsubscribe } = onAuthStateChange((_event, session) => {
       setSession(session);
-      setLoading(false);
-    }).catch(() => {
-      setSession(null);
-      setLoading(false);
     });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
+    return unsubscribe;
   }, []);
 
   const user = session?.user ?? null;
   const { data: profile } = useProfile(user?.id);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        profile: profile ?? null,
-        session,
-        loading,
-      }}
-    >
+    <AuthContext.Provider value={{ user, profile: profile ?? null, session, loading }}>
       {children}
     </AuthContext.Provider>
   );

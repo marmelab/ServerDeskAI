@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/lib/supabase";
+import { validateInvite } from "../services/invite";
 import { useAuth } from "../hooks/useAuth";
 
 const signupSchema = z.object({
@@ -45,22 +45,7 @@ export const SignupForm = () => {
     hasValidated.current = true;
 
     const validateToken = async () => {
-      const { data, error: rpcError } = await supabase.rpc("validate_invite", {
-        p_token: token,
-      });
-
-      if (rpcError || !data || data.length === 0) {
-        setError("Invalid or expired invite link");
-        setValidating(false);
-        return;
-      }
-
-      const invite = data[0] as { email: string } | undefined;
-      if (!invite) {
-        setError("Invalid or expired invite link");
-        setValidating(false);
-        return;
-      }
+      const invite = await validateInvite(token);
       setInviteEmail(invite.email);
       setValue("email", invite.email);
       setValidating(false);
@@ -113,7 +98,7 @@ export const SignupForm = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               {error}

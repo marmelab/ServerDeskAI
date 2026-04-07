@@ -8,12 +8,15 @@ import type { Customer } from "@/lib/types";
 const mockCreateMutateAsync = vi.fn();
 const mockUpdateMutateAsync = vi.fn();
 
-vi.mock("../hooks/useCustomers", () => ({
+vi.mock("../hooks/useCreateCustomer", () => ({
   useCreateCustomer: () => ({
     mutateAsync: mockCreateMutateAsync,
     isPending: false,
     error: null,
   }),
+}));
+
+vi.mock("../hooks/useUpdateCustomer", () => ({
   useUpdateCustomer: () => ({
     mutateAsync: mockUpdateMutateAsync,
     isPending: false,
