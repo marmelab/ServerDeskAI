@@ -139,12 +139,18 @@ tests/
   - Run: `npx playwright test`
   - Test files in `tests/e2e/`.
 - Write tests for all business logic and critical user paths.
+- **Unit test files with JSX must use `.test.tsx`** (not `.test.ts`) — Vite/OXC won't parse JSX in `.ts` files.
+- **Mock `@/lib/supabase`** in unit tests — all hooks import supabase directly, so mock the module with `vi.mock("@/lib/supabase", ...)`.
+- **Use `@testing-library/react` `renderHook`** for testing React Query hooks — wrap with `QueryClientProvider` (retry: false for deterministic tests).
+- **Test wrapper**: `src/test-utils.tsx` provides `renderWithProviders` (QueryClient + MemoryRouter) and `createTestQueryClient`.
+- **Mock `AuthProvider`** in component tests by mocking `"../AuthProvider"` with a `useAuthContext` that returns controlled values — avoids needing real Supabase auth.
+- **Prefer testing RPC call shapes** over mocking Supabase query chains — RPC mocks are simpler (`vi.fn()` on `supabase.rpc`) and verify the contract with the database.
 
 ## Supabase Guidelines
 
 - Always enable RLS on every table.
-- Write RLS policies that check role from `user_roles` table using `auth.uid()`.
-- Use database triggers (PL/pgSQL) for side effects (e.g., auto-creating user_roles on signup).
+- Write RLS policies that check role from `profiles` table using `auth.uid()`.
+- Use database triggers (PL/pgSQL) for side effects (e.g., auto-creating profile on signup).
 - Use Edge Functions for email webhook processing and sending.
 - Migrations go in `supabase/migrations/` with descriptive names.
 - Run `supabase db push` to apply migrations locally, `supabase db reset` to reset.
@@ -158,6 +164,9 @@ tests/
 - **Protect against race conditions** — use partial unique indexes or advisory locks for critical uniqueness guarantees (e.g., only one admin can exist via auto-signup).
 - **Add `updated_at` triggers** — never rely on client-side timestamps. Create a reusable `set_updated_at()` trigger function for all tables with `updated_at` columns.
 - **Keep schema in sync with CLAUDE.md** — if the data model spec says a column exists, the migration must include it. Flag deviations explicitly.
+- **Generate tokens server-side** — use `gen_random_bytes()` or `gen_random_uuid()` in PL/pgSQL, not `crypto.getRandomValues()` on the client. Client-side token generation can be bypassed.
+- **Prefer `SECURITY DEFINER` RPCs over direct table access** for sensitive operations (invites, role assignments, multi-step mutations). This centralizes authorization checks and ensures atomicity.
+- **Use advisory locks (`pg_advisory_xact_lock`) for first-user race protection** — partial unique indexes prevent ever adding a second row with that value (e.g., `one_admin_profile` prevented multiple admins). Advisory locks only serialize concurrent transactions.
 
 ## Error Handling
 
@@ -166,8 +175,10 @@ tests/
 - **Always wrap `mutateAsync()` in try/catch** — or use `mutate()` instead. If using `mutateAsync`, catch the error and let React Query's error state handle display. Show `mutation.error?.message` in the UI.
 - **Never use `!` (non-null assertion) on auth data** — `getUser()` can return `null` when the session expires. Always check for null and throw a meaningful error.
 - **Always render error states from queries** — destructure `isError`/`error` from `useQuery` and display them. Never show "No data" when the actual problem is a failed query.
-- **Handle `signOut` errors** — async functions used as `onClick` handlers must catch rejections.
-- **Use atomic operations for multi-step mutations** — delete-then-insert patterns must be wrapped in an RPC/transaction. A partial failure should not leave data in an inconsistent state.
+- **Handle `signOut` errors** — async functions used as `onClick` handlers must catch rejections. Show the error in the UI (e.g., state + `<p className="text-destructive">`), never `console.error`.
+- **Catch `navigator.clipboard` errors** — `writeText()` can throw on permissions denial. Use `.then()/.catch()` instead of `await` in click handlers, or wrap in try/catch.
+- **Guard query params with explicit null checks** — when `useQuery` has `enabled: !!id`, the `queryFn` should still check `if (!id) throw new Error(...)` instead of using `id!`. TypeScript doesn't narrow inside `queryFn` based on `enabled`.
+- **Use atomic operations for multi-step mutations** — delete-then-insert patterns must be wrapped in an RPC/transaction. A partial failure should not leave data in an inconsistent state. Existing examples: `update_agent_companies()` and `create_invite()` RPCs.
 
 ## Commands
 
