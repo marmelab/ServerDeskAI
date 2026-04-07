@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+.claude/settings.local.json
 
 # Editor directories and files
 .vscode/*
@@ -31,3 +32,6 @@ dist-ssr
 
 # Supabase
 supabase/.temp/
+
+# Brainstorm visual companion
+.superpowers/

@@ -1,0 +1,70 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "agent",
+            "if": "Bash(git commit *)",
+            "prompt": "A git commit was just made. Review the committed changes for code quality, security, and project convention compliance. Run: git diff HEAD~1 HEAD to see what changed. Use the review checklist from the code-reviewer agent definition at .claude/agents/code-reviewer.md. If you find Critical or Important issues, clearly state them and recommend running the debugger agent to fix them. If the code looks good, say APPROVE with a brief summary of strengths.",
+            "timeout": 120,
+            "statusMessage": "[Senior Dev] Reviewing committed code..."
+          },
+          {
+            "type": "command",
+            "if": "Bash(git commit *)",
+            "command": "cd /home/jerome/Work/ServerDeskClaude && npm test 2>&1 || true",
+            "timeout": 60,
+            "statusMessage": "[Tests] Running tests..."
+          },
+          {
+            "type": "agent",
+            "if": "Bash(git commit *)",
+            "prompt": "A git commit was just made and tests were run. Your job is to check if the committed changes need NEW tests. Run: git diff HEAD~1 HEAD --name-only to see changed files. For each changed file in src/features/ or src/lib/: 1) Check if a corresponding .test.ts or .test.tsx file exists, 2) If the file contains hooks, components, or utilities with logic, it SHOULD have tests, 3) If tests are missing or incomplete, list exactly which tests should be written. Read the test-writer agent at .claude/agents/test-writer.md for testing patterns. Report: TESTS_NEEDED with a list of what to test, or TESTS_OK if coverage is sufficient.",
+            "timeout": 120,
+            "statusMessage": "[Tests] Checking test coverage..."
+          },
+          {
+            "type": "agent",
+            "if": "Bash(gh pr create *)",
+            "prompt": "A pull request was just created. Run: git log main..HEAD --oneline to see all commits, and git diff main...HEAD --stat to see all changed files. Review the ENTIRE PR for: 1) Code quality across all changes, 2) Security issues, 3) Missing tests, 4) Consistency between features. This is a final gate before review — be thorough. Report using the code-reviewer format from .claude/agents/code-reviewer.md. Focus on cross-cutting concerns that per-commit reviews might miss.",
+            "timeout": 180,
+            "statusMessage": "[PR Review] Reviewing PR..."
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // .tool_response.filePath' | { read -r f; echo \"$f\" | grep -q 'supabase/migrations/.*\\.sql' && npx supabase db reset --no-seed 2>&1 | tail -5 || true; }",
+            "timeout": 60,
+            "statusMessage": "[Supabase] Applying migrations..."
+          },
+          {
+            "type": "agent",
+            "prompt": "A Supabase migration file was just created or modified. Check if the file path contains 'supabase/migrations/'. If it does, review the migration for: 1) Schema correctness (types, constraints, FKs), 2) RLS policy completeness, 3) Security issues, 4) Index coverage. Read the migration file and the design spec at docs/superpowers/specs/2026-04-07-serverdesk-phase1-design.md. Report any issues found. If the file is NOT a migration, say 'Not a migration file, skipping review.' Input: $ARGUMENTS",
+            "timeout": 120,
+            "statusMessage": "[Supabase] Reviewing migration..."
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "agent",
+            "if": "Bash(gh pr create *)",
+            "prompt": "A pull request is about to be created. Generate a PR title and description. Run: git log main..HEAD --oneline to see commits, git diff main...HEAD --stat to see files changed. Follow the format from .claude/agents/pr-summarizer.md: short imperative title (under 70 chars), Summary bullets (what and why), Changes list, Test plan checklist. Output the result so it can be used in the PR creation command. If the current gh pr create command already has a good --title and --body, say 'PR description looks good, proceeding.'",
+            "timeout": 60,
+            "statusMessage": "[PR] Generating PR description..."
+          }
+        ]
+      }
+    ]
+  }
+}

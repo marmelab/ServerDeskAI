@@ -31,17 +31,18 @@ There are 4 roles in the system:
 - **Supabase Auth** for login, signup, logout (admin, agent, customer manager only).
 - **First user** registered becomes admin automatically.
 - **Invite system**: Admin generates a token-based invite link for agents and customer managers. Signup is only possible with a valid invite token.
-- **Role table**: A `user_roles` table linked to `auth.users` via foreign key.
-- **Database trigger**: On `INSERT` into `auth.users`, a trigger automatically creates a row in `user_roles` with the appropriate role (derived from the invite token, or `admin` for the first user).
+- **Role table**: A `profiles` table linked to `auth.users` via foreign key.
+- **Database trigger**: On `INSERT` into `auth.users`, a trigger automatically creates a row in `profiles` with the appropriate role (derived from the invite token, or `admin` for the first user).
 
 ### Data Model (Core Tables)
 
-- `user_roles` — user_id (FK to auth.users), role (enum: admin, agent, customer_manager), created_at
-- `invites` — id, email, role, token, invited_by (FK), company_id (nullable, for customer_manager), used_at, expires_at, created_at
-- `agent_companies` — agent_id (FK to auth.users), company_id (FK), created_at (many-to-many: an agent can be assigned to multiple companies)
-- `companies` — id, name, domain, created_at
-- `customers` — id, email, name, company_id (FK), created_at
-- `tickets` — id, subject, status (enum: open, in_progress, waiting, resolved, closed), priority (enum: low, medium, high, urgent), customer_id (FK), assigned_agent_id (FK, nullable), company_id (FK), created_at, updated_at
+- `profiles` — user_id (FK to auth.users, PK), name, role (enum: admin, agent, customer_manager), created_at
+- `invites` — id, email, role, token (unique), invited_by (FK), used_at, expires_at, created_at
+- `invite_companies` — invite_id (FK), company_id (FK), created_at (PK: invite_id + company_id)
+- `user_companies` — user_id (FK to auth.users), company_id (FK), created_at (PK: user_id + company_id; many-to-many for agents and customer managers)
+- `companies` — id, name, domain, created_at, updated_at
+- `customers` — id, email (unique), name, company_id (FK), created_at
+- `tickets` — id, subject, description, status (enum: open, in_progress, waiting, resolved, closed), priority (enum: low, medium, high, urgent), customer_id (FK), assigned_agent_id (FK, nullable), company_id (FK), created_by (FK, nullable), created_at, updated_at
 - `ticket_messages` — id, ticket_id (FK), sender_type (enum: customer, agent, system), sender_id, body, created_at
 - `email_logs` — id, ticket_id (FK), direction (enum: inbound, outbound), email_metadata (jsonb), created_at
 
@@ -54,7 +55,7 @@ There are 4 roles in the system:
 ### Access Control (RLS)
 
 - **Admin**: Full access to all tables.
-- **Agent**: Read/write on tickets and ticket_messages scoped to their assigned companies (via `agent_companies`). Read on customers and companies they are assigned to.
+- **Agent**: Read/write on tickets and ticket_messages scoped to their assigned companies (via `user_companies`). Read on customers and companies they are assigned to.
 - **Customer Manager**: Read/write only on tickets, customers, and messages scoped to their company_id.
 - All policies enforced via Supabase Row Level Security (RLS).
 
@@ -102,6 +103,32 @@ tests/
 - Use React Router for routing.
 - Use Tanstack Query (React Query) for server state management.
 - Form validation with zod + react-hook-form.
+- Import zod consistently as `import { z } from "zod"` across all files (not `"zod/v4"`).
+- Use Supabase generated types (`TablesInsert<>`, `TablesUpdate<>`) for mutation payloads — avoid duplicating column shapes manually.
+- Never use `as unknown as T` double casts — fix the query or type definition instead.
+- Prefer single joined queries over N+1 loops (e.g., fetch all related rows with `.in()` instead of per-item queries in a `for` loop).
+
+## Linting
+
+- **Always run `npm run lint` before considering work complete.** Fix all errors before committing.
+- ESLint flat config (`eslint.config.js`) with TypeScript-ESLint, React Hooks, and React Refresh plugins.
+- **TypeScript-ESLint (recommended rules)**:
+  - No `any` types — use proper types or `unknown`.
+  - No unused variables — remove them or prefix with `_` only if genuinely needed (e.g., rest patterns).
+  - No explicit return types required, but inferred types must be correct.
+  - No `@ts-ignore` — use `@ts-expect-error` with a comment if suppression is truly necessary.
+  - No non-null assertions (`!`) unless you can prove the value is defined.
+- **React Hooks rules**:
+  - All hooks must follow the Rules of Hooks (no conditional hooks, no hooks in loops).
+  - Exhaustive deps in `useEffect`, `useMemo`, `useCallback` — do not suppress the lint warning without a documented reason.
+- **React Refresh**:
+  - Only export React components from `.tsx` files that use Fast Refresh. Do not mix component exports with non-component exports in the same file.
+- **General**:
+  - No `console.log` in committed code — use a proper logger or remove before committing.
+  - No `var` — use `const` or `let`.
+  - Prefer `const` over `let` when the variable is never reassigned.
+  - No unreachable code after `return`, `throw`, `break`, or `continue`.
+  - Run `npm run lint:fix` for auto-fixable issues, then manually fix the rest.
 
 ## Testing
 
@@ -112,15 +139,46 @@ tests/
   - Run: `npx playwright test`
   - Test files in `tests/e2e/`.
 - Write tests for all business logic and critical user paths.
+- **Unit test files with JSX must use `.test.tsx`** (not `.test.ts`) — Vite/OXC won't parse JSX in `.ts` files.
+- **Mock `@/lib/supabase`** in unit tests — all hooks import supabase directly, so mock the module with `vi.mock("@/lib/supabase", ...)`.
+- **Use `@testing-library/react` `renderHook`** for testing React Query hooks — wrap with `QueryClientProvider` (retry: false for deterministic tests).
+- **Test wrapper**: `src/test-utils.tsx` provides `renderWithProviders` (QueryClient + MemoryRouter) and `createTestQueryClient`.
+- **Mock `AuthProvider`** in component tests by mocking `"../AuthProvider"` with a `useAuthContext` that returns controlled values — avoids needing real Supabase auth.
+- **Prefer testing RPC call shapes** over mocking Supabase query chains — RPC mocks are simpler (`vi.fn()` on `supabase.rpc`) and verify the contract with the database.
 
 ## Supabase Guidelines
 
 - Always enable RLS on every table.
-- Write RLS policies that check role from `user_roles` table using `auth.uid()`.
-- Use database triggers (PL/pgSQL) for side effects (e.g., auto-creating user_roles on signup).
+- Write RLS policies that check role from `profiles` table using `auth.uid()`.
+- Use database triggers (PL/pgSQL) for side effects (e.g., auto-creating profile on signup).
 - Use Edge Functions for email webhook processing and sending.
 - Migrations go in `supabase/migrations/` with descriptive names.
 - Run `supabase db push` to apply migrations locally, `supabase db reset` to reset.
+
+### RLS Security Rules
+
+- **Never use `USING (true)`** on SELECT policies — this exposes the entire table to any authenticated user. Scope policies to the user's role or use a `SECURITY DEFINER` function for controlled access.
+- **Always add `WITH CHECK` on UPDATE/INSERT policies** to restrict which columns/values can be written. RLS cannot restrict individual columns, so use `SECURITY DEFINER` functions for column-level control (e.g., letting users update only their `name`, not their `role`).
+- **Validate security-sensitive data server-side**, never client-side only. Invite tokens, role assignments, and access grants must be verified in database triggers or RPC functions, not just in the frontend.
+- **Prevent sender impersonation** — INSERT policies on message tables must enforce `sender_type` and `sender_id = auth.uid()` via `WITH CHECK`.
+- **Protect against race conditions** — use partial unique indexes or advisory locks for critical uniqueness guarantees (e.g., only one admin can exist via auto-signup).
+- **Add `updated_at` triggers** — never rely on client-side timestamps. Create a reusable `set_updated_at()` trigger function for all tables with `updated_at` columns.
+- **Keep schema in sync with CLAUDE.md** — if the data model spec says a column exists, the migration must include it. Flag deviations explicitly.
+- **Generate tokens server-side** — use `gen_random_bytes()` or `gen_random_uuid()` in PL/pgSQL, not `crypto.getRandomValues()` on the client. Client-side token generation can be bypassed.
+- **Prefer `SECURITY DEFINER` RPCs over direct table access** for sensitive operations (invites, role assignments, multi-step mutations). This centralizes authorization checks and ensures atomicity.
+- **Use advisory locks (`pg_advisory_xact_lock`) for first-user race protection** — partial unique indexes prevent ever adding a second row with that value (e.g., `one_admin_profile` prevented multiple admins). Advisory locks only serialize concurrent transactions.
+
+## Error Handling
+
+- **Always check Supabase `.error`** — every Supabase query/mutation returns `{ data, error }`. Never destructure only `data` and ignore `error`.
+- **Always add `.catch()` to standalone promises** — especially `getSession()`, `getUser()`, and any async call in `useEffect`. An uncaught rejection can leave the app stuck permanently.
+- **Always wrap `mutateAsync()` in try/catch** — or use `mutate()` instead. If using `mutateAsync`, catch the error and let React Query's error state handle display. Show `mutation.error?.message` in the UI.
+- **Never use `!` (non-null assertion) on auth data** — `getUser()` can return `null` when the session expires. Always check for null and throw a meaningful error.
+- **Always render error states from queries** — destructure `isError`/`error` from `useQuery` and display them. Never show "No data" when the actual problem is a failed query.
+- **Handle `signOut` errors** — async functions used as `onClick` handlers must catch rejections. Show the error in the UI (e.g., state + `<p className="text-destructive">`), never `console.error`.
+- **Catch `navigator.clipboard` errors** — `writeText()` can throw on permissions denial. Use `.then()/.catch()` instead of `await` in click handlers, or wrap in try/catch.
+- **Guard query params with explicit null checks** — when `useQuery` has `enabled: !!id`, the `queryFn` should still check `if (!id) throw new Error(...)` instead of using `id!`. TypeScript doesn't narrow inside `queryFn` based on `enabled`.
+- **Use atomic operations for multi-step mutations** — delete-then-insert patterns must be wrapped in an RPC/transaction. A partial failure should not leave data in an inconsistent state. Existing examples: `update_agent_companies()` and `create_invite()` RPCs.
 
 ## Commands
 
