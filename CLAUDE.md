@@ -31,17 +31,18 @@ There are 4 roles in the system:
 - **Supabase Auth** for login, signup, logout (admin, agent, customer manager only).
 - **First user** registered becomes admin automatically.
 - **Invite system**: Admin generates a token-based invite link for agents and customer managers. Signup is only possible with a valid invite token.
-- **Role table**: A `user_roles` table linked to `auth.users` via foreign key.
-- **Database trigger**: On `INSERT` into `auth.users`, a trigger automatically creates a row in `user_roles` with the appropriate role (derived from the invite token, or `admin` for the first user).
+- **Role table**: A `profiles` table linked to `auth.users` via foreign key.
+- **Database trigger**: On `INSERT` into `auth.users`, a trigger automatically creates a row in `profiles` with the appropriate role (derived from the invite token, or `admin` for the first user).
 
 ### Data Model (Core Tables)
 
-- `user_roles` — user_id (FK to auth.users), role (enum: admin, agent, customer_manager), created_at
-- `invites` — id, email, role, token, invited_by (FK), company_id (nullable, for customer_manager), used_at, expires_at, created_at
-- `agent_companies` — agent_id (FK to auth.users), company_id (FK), created_at (many-to-many: an agent can be assigned to multiple companies)
-- `companies` — id, name, domain, created_at
-- `customers` — id, email, name, company_id (FK), created_at
-- `tickets` — id, subject, status (enum: open, in_progress, waiting, resolved, closed), priority (enum: low, medium, high, urgent), customer_id (FK), assigned_agent_id (FK, nullable), company_id (FK), created_at, updated_at
+- `profiles` — user_id (FK to auth.users, PK), name, role (enum: admin, agent, customer_manager), created_at
+- `invites` — id, email, role, token (unique), invited_by (FK), used_at, expires_at, created_at
+- `invite_companies` — invite_id (FK), company_id (FK), created_at (PK: invite_id + company_id)
+- `user_companies` — user_id (FK to auth.users), company_id (FK), created_at (PK: user_id + company_id; many-to-many for agents and customer managers)
+- `companies` — id, name, domain, created_at, updated_at
+- `customers` — id, email (unique), name, company_id (FK), created_at
+- `tickets` — id, subject, description, status (enum: open, in_progress, waiting, resolved, closed), priority (enum: low, medium, high, urgent), customer_id (FK), assigned_agent_id (FK, nullable), company_id (FK), created_by (FK, nullable), created_at, updated_at
 - `ticket_messages` — id, ticket_id (FK), sender_type (enum: customer, agent, system), sender_id, body, created_at
 - `email_logs` — id, ticket_id (FK), direction (enum: inbound, outbound), email_metadata (jsonb), created_at
 
@@ -54,7 +55,7 @@ There are 4 roles in the system:
 ### Access Control (RLS)
 
 - **Admin**: Full access to all tables.
-- **Agent**: Read/write on tickets and ticket_messages scoped to their assigned companies (via `agent_companies`). Read on customers and companies they are assigned to.
+- **Agent**: Read/write on tickets and ticket_messages scoped to their assigned companies (via `user_companies`). Read on customers and companies they are assigned to.
 - **Customer Manager**: Read/write only on tickets, customers, and messages scoped to their company_id.
 - All policies enforced via Supabase Row Level Security (RLS).
 

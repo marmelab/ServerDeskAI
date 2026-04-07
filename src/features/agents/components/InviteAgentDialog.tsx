@@ -59,11 +59,14 @@ export const InviteAgentDialog = () => {
     }
   };
 
-  const handleCopy = async () => {
+  const handleCopy = () => {
     if (inviteLink) {
-      await navigator.clipboard.writeText(inviteLink);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      navigator.clipboard.writeText(inviteLink).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }).catch(() => {
+        // Clipboard API not available — fall back silently
+      });
     }
   };
 

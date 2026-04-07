@@ -55,6 +55,38 @@ export type Database = {
         }
         Relationships: []
       }
+      email_logs: {
+        Row: {
+          created_at: string
+          direction: Database["public"]["Enums"]["email_direction"]
+          email_metadata: Json
+          id: string
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string
+          direction: Database["public"]["Enums"]["email_direction"]
+          email_metadata?: Json
+          id?: string
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string
+          direction?: Database["public"]["Enums"]["email_direction"]
+          email_metadata?: Json
+          id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_logs_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           company_id: string
@@ -294,14 +326,44 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_invite: {
+        Args: {
+          p_email: string
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_company_ids: string[]
+        }
+        Returns: { invite_id: string; token: string }[]
+      }
+      update_agent_companies: {
+        Args: {
+          p_agent_id: string
+          p_company_ids: string[]
+        }
+        Returns: undefined
+      }
+      update_own_profile: {
+        Args: { p_name: string }
+        Returns: undefined
+      }
       user_company_ids: { Args: never; Returns: string[] }
       user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      validate_invite: {
+        Args: { p_token: string }
+        Returns: {
+          id: string
+          email: string
+          role: Database["public"]["Enums"]["app_role"]
+          token: string
+          expires_at: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "agent" | "customer_manager"
+      email_direction: "inbound" | "outbound"
       sender_type: "customer" | "agent" | "system"
       ticket_priority: "low" | "medium" | "high" | "urgent"
       ticket_status: "open" | "in_progress" | "waiting" | "resolved" | "closed"

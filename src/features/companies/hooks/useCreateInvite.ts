@@ -8,49 +8,21 @@ type CreateInviteParams = {
   companyIds: string[];
 };
 
-const generateToken = () => {
-  const array = new Uint8Array(32);
-  crypto.getRandomValues(array);
-  return Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
-};
-
 export const useCreateInvite = () => {
   return useMutation({
     mutationFn: async ({ email, role, companyIds }: CreateInviteParams) => {
-      const token = generateToken();
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7); // 7 day expiry
+      const { data, error } = await supabase.rpc("create_invite", {
+        p_email: email,
+        p_role: role,
+        p_company_ids: companyIds,
+      });
 
-      const { data: invite, error: inviteError } = await supabase
-        .from("invites")
-        .insert({
-          email,
-          role,
-          token,
-          invited_by: await supabase.auth.getUser().then(({ data: { user } }) => {
-            if (!user) throw new Error("Not authenticated");
-            return user.id;
-          }),
-          expires_at: expiresAt.toISOString(),
-        })
-        .select()
-        .single();
+      if (error) throw error;
 
-      if (inviteError) throw inviteError;
+      const row = data?.[0];
+      if (!row) throw new Error("Failed to create invite");
 
-      if (companyIds.length > 0) {
-        const { error: icError } = await supabase
-          .from("invite_companies")
-          .insert(
-            companyIds.map((companyId) => ({
-              invite_id: invite.id,
-              company_id: companyId,
-            })),
-          );
-        if (icError) throw icError;
-      }
-
-      return { invite, token };
+      return { invite: { id: row.invite_id }, token: row.token };
     },
   });
 };

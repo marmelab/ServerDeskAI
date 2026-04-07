@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
-import type { Invite } from "@/lib/types";
 import { useAuth } from "../hooks/useAuth";
 
 const signupSchema = z.object({
@@ -43,46 +42,32 @@ export const SignupForm = () => {
     }
 
     const validateToken = async () => {
-      const response = await supabase
-        .from("invites")
-        .select("email, used_at, expires_at")
-        .eq("token", token)
-        .returns<Pick<Invite, "email" | "used_at" | "expires_at">[]>()
-        .single();
+      const { data, error: rpcError } = await supabase.rpc("validate_invite", {
+        p_token: token,
+      });
 
-      if (response.error) {
-        setError("Invalid invite link");
+      if (rpcError || !data || data.length === 0) {
+        setError("Invalid or expired invite link");
         setValidating(false);
         return;
       }
 
-      const invite = response.data;
-
+      const invite = data[0] as { email: string } | undefined;
       if (!invite) {
-        setError("Invalid invite link");
+        setError("Invalid or expired invite link");
         setValidating(false);
         return;
       }
-
-      if (invite.used_at) {
-        setError("This invite has already been used");
-        setValidating(false);
-        return;
-      }
-
-      if (new Date(invite.expires_at) < new Date()) {
-        setError("This invite has expired");
-        setValidating(false);
-        return;
-      }
-
       setInviteEmail(invite.email);
       setValue("email", invite.email);
       setValidating(false);
     };
 
 
-    validateToken();
+    validateToken().catch((err: unknown) => {
+      setError(err instanceof Error ? err.message : "Failed to validate invite");
+      setValidating(false);
+    });
   }, [token, setValue]);
 
   const onSubmit = async (values: SignupValues) => {

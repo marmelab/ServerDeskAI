@@ -6,10 +6,11 @@ export const useCompany = (id: string | undefined) => {
   return useQuery<Company>({
     queryKey: ["company", id],
     queryFn: async () => {
+      if (!id) throw new Error("Company id is required");
       const { data, error } = await supabase
         .from("companies")
         .select("*")
-        .eq("id", id!)
+        .eq("id", id)
         .single();
       if (error) throw error;
       return data;

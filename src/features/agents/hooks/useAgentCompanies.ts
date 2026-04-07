@@ -12,27 +12,12 @@ export const useUpdateAgentCompanies = () => {
       agentId: string;
       companyIds: string[];
     }) => {
-      // Delete existing assignments
-      const { error: deleteError } = await supabase
-        .from("user_companies")
-        .delete()
-        .eq("user_id", agentId);
+      const { error } = await supabase.rpc("update_agent_companies", {
+        p_agent_id: agentId,
+        p_company_ids: companyIds,
+      });
 
-      if (deleteError) throw deleteError;
-
-      // Insert new assignments
-      if (companyIds.length > 0) {
-        const { error: insertError } = await supabase
-          .from("user_companies")
-          .insert(
-            companyIds.map((companyId) => ({
-              user_id: agentId,
-              company_id: companyId,
-            })),
-          );
-
-        if (insertError) throw insertError;
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["agents"] });

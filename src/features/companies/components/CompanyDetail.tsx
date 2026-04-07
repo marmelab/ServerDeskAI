@@ -20,7 +20,7 @@ type EditValues = z.infer<typeof editSchema>;
 export const CompanyDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data: company, isLoading } = useCompany(id);
+  const { data: company, isLoading, isError, error: queryError } = useCompany(id);
   const updateCompany = useUpdateCompany();
   const deleteCompany = useDeleteCompany();
   const [editing, setEditing] = useState(false);
@@ -36,6 +36,10 @@ export const CompanyDetail = () => {
 
   if (isLoading) {
     return <p className="text-muted-foreground">Loading...</p>;
+  }
+
+  if (isError) {
+    return <p className="text-destructive">Failed to load company: {queryError.message}</p>;
   }
 
   if (!company) {

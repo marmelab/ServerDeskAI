@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink, Outlet } from "react-router";
 import { useAuthContext } from "@/features/auth/AuthProvider";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -15,6 +16,7 @@ const navItems = [
 export const AppLayout = () => {
   const { profile, user } = useAuthContext();
   const { signOut } = useAuth();
+  const [signOutError, setSignOutError] = useState<string | null>(null);
 
   const visibleItems = navItems.filter(
     (item) => profile && (item.roles as readonly string[]).includes(profile.role),
@@ -47,7 +49,14 @@ export const AppLayout = () => {
           <p className="mb-2 truncate text-sm text-muted-foreground">
             {user?.email}
           </p>
-          <Button variant="outline" size="sm" className="w-full" onClick={() => { signOut().catch(console.error); }}>
+          {signOutError && (
+            <p className="mb-2 text-sm text-destructive">{signOutError}</p>
+          )}
+          <Button variant="outline" size="sm" className="w-full" onClick={() => {
+            signOut().catch((err: unknown) => {
+              setSignOutError(err instanceof Error ? err.message : "Sign out failed");
+            });
+          }}>
             Sign out
           </Button>
         </div>
