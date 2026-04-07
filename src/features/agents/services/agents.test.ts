@@ -33,10 +33,10 @@ describe("fetchAgents", () => {
       return makeChain({ data: null, error: null });
     });
 
-    const result = await fetchAgents();
+    const result = await fetchAgents() as AgentWithCompanies[];
     expect(result).toHaveLength(1);
-    expect((result as AgentWithCompanies[])[0].companies).toHaveLength(1);
-    expect((result as AgentWithCompanies[])[0].companies[0].name).toBe("Acme");
+    expect(result[0]?.companies).toHaveLength(1);
+    expect(result[0]?.companies[0]?.name).toBe("Acme");
   });
 
   it("throws on profiles error", async () => {
@@ -53,9 +53,9 @@ describe("fetchAgents", () => {
       return makeChain({ data: [], error: null });
     });
 
-    const result = await fetchAgents();
+    const result = await fetchAgents() as AgentWithCompanies[];
     expect(result).toHaveLength(1);
-    expect((result as AgentWithCompanies[])[0].companies).toHaveLength(0);
+    expect(result[0]?.companies).toHaveLength(0);
   });
 
   it("throws on user_companies error", async () => {
