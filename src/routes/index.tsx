@@ -6,6 +6,7 @@ import { RoleGuard } from "@/features/auth/components/RoleGuard";
 import { LoginForm } from "@/features/auth/components/LoginForm";
 import { SignupForm } from "@/features/auth/components/SignupForm";
 import { CompanyList } from "@/features/companies/components/CompanyList";
+import { CompanyDetail } from "@/features/companies/components/CompanyDetail";
 
 export const router = createBrowserRouter([
   {
@@ -33,6 +34,10 @@ export const router = createBrowserRouter([
               {
                 path: "/companies",
                 element: <CompanyList />,
+              },
+              {
+                path: "/companies/:id",
+                element: <CompanyDetail />,
               },
               {
                 path: "/agents",
