@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,11 +35,14 @@ export const SignupForm = () => {
     resolver: zodResolver(signupSchema),
   });
 
+  const hasValidated = useRef(false);
+
   useEffect(() => {
     if (!token) {
-      setValidating(false);
       return;
     }
+    if (hasValidated.current) return;
+    hasValidated.current = true;
 
     const validateToken = async () => {
       const { data, error: rpcError } = await supabase.rpc("validate_invite", {

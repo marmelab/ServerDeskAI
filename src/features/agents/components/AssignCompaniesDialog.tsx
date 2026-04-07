@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,11 +24,12 @@ export const AssignCompaniesDialog = ({
   const { data: companies } = useCompanies();
   const updateCompanies = useUpdateAgentCompanies();
 
-  useEffect(() => {
-    if (open) {
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
       setSelectedIds(agent.companies.map((c) => c.id));
     }
-  }, [open, agent.companies]);
+    setOpen(nextOpen);
+  };
 
   const toggleCompany = (companyId: string) => {
     setSelectedIds((prev) =>
@@ -51,7 +52,7 @@ export const AssignCompaniesDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={<Button variant="ghost" size="sm" />}>
         Edit companies
       </DialogTrigger>
