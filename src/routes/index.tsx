@@ -7,6 +7,7 @@ import { LoginForm } from "@/features/auth/components/LoginForm";
 import { SignupForm } from "@/features/auth/components/SignupForm";
 import { CompanyList } from "@/features/companies/components/CompanyList";
 import { CompanyDetail } from "@/features/companies/components/CompanyDetail";
+import { AgentList } from "@/features/agents/components/AgentList";
 
 export const router = createBrowserRouter([
   {
@@ -41,7 +42,7 @@ export const router = createBrowserRouter([
               },
               {
                 path: "/agents",
-                element: <div>Agents — coming soon</div>,
+                element: <AgentList />,
               },
             ],
           },
