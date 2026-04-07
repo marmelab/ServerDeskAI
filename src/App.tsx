@@ -1,10 +1,20 @@
-import { Button } from "@/components/ui/button";
+import { RouterProvider } from "react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { router } from "@/routes";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60,
+      retry: 1,
+    },
+  },
+});
 
 export const App = () => {
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold">ServerDesk</h1>
-      <Button className="mt-4">Get Started</Button>
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
   );
 };
