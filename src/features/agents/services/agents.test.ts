@@ -57,6 +57,18 @@ describe("fetchAgents", () => {
     expect(result).toHaveLength(1);
     expect((result as AgentWithCompanies[])[0].companies).toHaveLength(0);
   });
+
+  it("throws on user_companies error", async () => {
+    const profiles = [{ user_id: "u1", name: "Agent A", role: "agent", created_at: "" }];
+    let callCount = 0;
+    mockFrom.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) return makeChain({ data: profiles, error: null });
+      return makeChain({ data: null, error: { message: "user_companies failed" } });
+    });
+
+    await expect(fetchAgents()).rejects.toEqual({ message: "user_companies failed" });
+  });
 });
 
 describe("updateAgentCompanies", () => {
