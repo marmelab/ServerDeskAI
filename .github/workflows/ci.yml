@@ -56,7 +56,18 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase start -x realtime,storage,imgproxy,inbucket,postgrest-exporter,pgadmin-schema-diff,migra,pgbouncer,logflare,edge-runtime,vector
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npm run build
+      - name: Build with Supabase env
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: http://127.0.0.1:54321
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
       - run: npx playwright test
+        env:
+          VITE_SUPABASE_URL: http://127.0.0.1:54321
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
