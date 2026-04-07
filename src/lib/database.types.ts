@@ -330,7 +330,7 @@ export type Database = {
         Args: {
           p_email: string
           p_role: Database["public"]["Enums"]["app_role"]
-          p_company_ids: string[]
+          p_company_ids?: string[]
         }
         Returns: { invite_id: string; token: string }[]
       }

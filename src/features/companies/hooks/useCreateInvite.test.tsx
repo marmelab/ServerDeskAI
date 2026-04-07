@@ -48,12 +48,36 @@ describe("useCreateInvite", () => {
       p_email: "agent@example.com",
       p_role: "agent",
       p_company_ids: ["company-1"],
-    });
+    } as Record<string, unknown>);
 
     expect(result.current.data).toEqual({
       invite: { id: "inv-1" },
       token: "generated-token-abc",
     });
+  });
+
+  it("omits p_company_ids when companyIds is empty", async () => {
+    mockRpc.mockResolvedValue({
+      data: [{ invite_id: "inv-2", token: "token-no-companies" }],
+      error: null,
+    });
+
+    const { result } = renderHook(() => useCreateInvite(), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.mutate({
+      email: "agent@example.com",
+      role: "agent",
+      companyIds: [],
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(mockRpc).toHaveBeenCalledWith("create_invite", {
+      p_email: "agent@example.com",
+      p_role: "agent",
+    } as Record<string, unknown>);
   });
 
   it("handles RPC error", async () => {

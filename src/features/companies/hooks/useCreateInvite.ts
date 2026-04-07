@@ -11,11 +11,14 @@ type CreateInviteParams = {
 export const useCreateInvite = () => {
   return useMutation({
     mutationFn: async ({ email, role, companyIds }: CreateInviteParams) => {
-      const { data, error } = await supabase.rpc("create_invite", {
+      const params: { p_email: string; p_role: AppRole; p_company_ids?: string[] } = {
         p_email: email,
         p_role: role,
-        p_company_ids: companyIds,
-      });
+      };
+      if (companyIds.length > 0) {
+        params.p_company_ids = companyIds;
+      }
+      const { data, error } = await supabase.rpc("create_invite", params);
 
       if (error) throw error;
 
