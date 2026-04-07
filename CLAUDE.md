@@ -108,6 +108,13 @@ tests/
 - Never use `as unknown as T` double casts — fix the query or type definition instead.
 - Prefer single joined queries over N+1 loops (e.g., fetch all related rows with `.in()` instead of per-item queries in a `for` loop).
 
+### Hooks / Services Architecture
+
+- **Services** (`src/features/[feature]/services/[domain].ts`) — plain `async` functions that call Supabase. They have no React dependencies. One file per data domain (e.g., `customers.ts`, `companies.ts`, `invites.ts`).
+- **Hooks** (`src/features/[feature]/hooks/use[Action].ts`) — one file per action/query. Import **only** from the feature's service files, never from `@/lib/supabase` directly.
+- Components import hooks; hooks import services; services import `@/lib/supabase`. No layer skips.
+- **Testing**: hook tests mock the service module (`vi.mock("../services/[domain]", ...)`). Service tests mock `@/lib/supabase`. Never mock supabase in hook tests.
+
 ## Linting
 
 - **Always run `npm run lint` before considering work complete.** Fix all errors before committing.
