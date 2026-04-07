@@ -4,7 +4,7 @@ test.describe("Authentication flows", () => {
   test("shows login page with form fields", async ({ page }) => {
     await page.goto("/login");
 
-    await expect(page.getByRole("heading", { name: /sign in/i })).toBeVisible();
+    await expect(page.getByText(/sign in to serverdesk/i)).toBeVisible();
     await expect(page.getByLabel("Email")).toBeVisible();
     await expect(page.getByLabel("Password")).toBeVisible();
     await expect(page.getByRole("button", { name: /sign in/i })).toBeVisible();
@@ -22,9 +22,7 @@ test.describe("Authentication flows", () => {
   test("shows signup page for first admin", async ({ page }) => {
     await page.goto("/signup");
 
-    await expect(
-      page.getByRole("heading", { name: /create admin account/i }),
-    ).toBeVisible();
+    await expect(page.getByText(/create admin account/i)).toBeVisible();
     await expect(page.getByLabel("Email")).toBeVisible();
     await expect(page.getByLabel("Name")).toBeVisible();
     await expect(page.getByLabel("Password")).toBeVisible();

@@ -8,14 +8,12 @@ test.describe("Navigation and routing", () => {
 
   test("login page is accessible", async ({ page }) => {
     await page.goto("/login");
-    await expect(page.getByRole("heading", { name: /sign in/i })).toBeVisible();
+    await expect(page.getByText(/sign in to serverdesk/i)).toBeVisible();
   });
 
   test("signup page is accessible", async ({ page }) => {
     await page.goto("/signup");
-    await expect(
-      page.getByRole("heading", { name: /create.*account/i }),
-    ).toBeVisible();
+    await expect(page.getByText(/create admin account/i)).toBeVisible();
   });
 
   test("login form shows error for invalid credentials", async ({ page }) => {
