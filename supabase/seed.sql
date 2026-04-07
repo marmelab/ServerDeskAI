@@ -15,105 +15,29 @@
 -- Run with: supabase db reset (which applies migrations then seed)
 -- =============================================================================
 
-BEGIN;
+-- ---------------------------------------------------------------------------
+-- 0. Clean slate (idempotent) — delete in FK-safe order
+-- ---------------------------------------------------------------------------
+DELETE FROM ticket_messages;
+DELETE FROM tickets;
+DELETE FROM customers;
+DELETE FROM email_logs;
+DELETE FROM user_companies;
+DELETE FROM invite_companies;
+DELETE FROM invites;
+DELETE FROM profiles;
+DELETE FROM companies;
 
 -- ---------------------------------------------------------------------------
--- 0. Clean slate (idempotent)
--- ---------------------------------------------------------------------------
-TRUNCATE
-  ticket_messages,
-  tickets,
-  customers,
-  user_companies,
-  invite_companies,
-  invites,
-  profiles,
-  companies
-CASCADE;
-
--- Also clean auth.users (need to handle FK constraints)
-DELETE FROM auth.users WHERE id IN (
-  'a0000000-0000-0000-0000-000000000001',
-  'a0000000-0000-0000-0000-000000000002',
-  'a0000000-0000-0000-0000-000000000003',
-  'a0000000-0000-0000-0000-000000000004'
-);
-
--- ---------------------------------------------------------------------------
--- 1. Disable the signup trigger (we insert profiles manually)
--- ---------------------------------------------------------------------------
-ALTER TABLE auth.users DISABLE TRIGGER on_auth_user_created;
-
--- ---------------------------------------------------------------------------
--- 2. Auth users
--- ---------------------------------------------------------------------------
-INSERT INTO auth.users (
-  instance_id, id, aud, role, email, encrypted_password,
-  email_confirmed_at, created_at, updated_at,
-  raw_app_meta_data, raw_user_meta_data, is_super_admin
-) VALUES
-  -- Admin
-  (
-    '00000000-0000-0000-0000-000000000000',
-    'a0000000-0000-0000-0000-000000000001',
-    'authenticated', 'authenticated',
-    'admin@serverdesk.local',
-    crypt('password123', gen_salt('bf')),
-    now(), now(), now(),
-    '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"name":"Alice Martin"}'::jsonb,
-    false
-  ),
-  -- Agent 1
-  (
-    '00000000-0000-0000-0000-000000000000',
-    'a0000000-0000-0000-0000-000000000002',
-    'authenticated', 'authenticated',
-    'agent1@serverdesk.local',
-    crypt('password123', gen_salt('bf')),
-    now(), now(), now(),
-    '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"name":"Bob Chen"}'::jsonb,
-    false
-  ),
-  -- Agent 2
-  (
-    '00000000-0000-0000-0000-000000000000',
-    'a0000000-0000-0000-0000-000000000003',
-    'authenticated', 'authenticated',
-    'agent2@serverdesk.local',
-    crypt('password123', gen_salt('bf')),
-    now(), now(), now(),
-    '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"name":"Carol Reeves"}'::jsonb,
-    false
-  ),
-  -- Customer Manager
-  (
-    '00000000-0000-0000-0000-000000000000',
-    'a0000000-0000-0000-0000-000000000004',
-    'authenticated', 'authenticated',
-    'cm@serverdesk.local',
-    crypt('password123', gen_salt('bf')),
-    now(), now(), now(),
-    '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"name":"Diana Patel"}'::jsonb,
-    false
-  );
-
--- ---------------------------------------------------------------------------
--- 3. Profiles (normally created by trigger, inserted manually here)
+-- 1. Auth users — created via supabase_auth_admin in a separate migration
+--    (00007_seed_auth_users.sql) because seed.sql cannot access auth schema.
+--    The profiles are created here since they live in the public schema.
 -- ---------------------------------------------------------------------------
 INSERT INTO profiles (user_id, name, role) VALUES
   ('a0000000-0000-0000-0000-000000000001', 'Alice Martin',  'admin'),
   ('a0000000-0000-0000-0000-000000000002', 'Bob Chen',      'agent'),
   ('a0000000-0000-0000-0000-000000000003', 'Carol Reeves',  'agent'),
   ('a0000000-0000-0000-0000-000000000004', 'Diana Patel',   'customer_manager');
-
--- ---------------------------------------------------------------------------
--- 4. Re-enable the signup trigger
--- ---------------------------------------------------------------------------
-ALTER TABLE auth.users ENABLE TRIGGER on_auth_user_created;
 
 -- ---------------------------------------------------------------------------
 -- 5. Companies
@@ -437,4 +361,3 @@ INSERT INTO ticket_messages (id, ticket_id, sender_type, sender_id, body, create
    'We have been getting reports from our clients that our transactional emails (order confirmations, password resets) are going to spam in Gmail. This started about a week ago. Our SPF and DKIM records have not changed. Could you investigate?',
    now() - interval '12 hours');
 
-COMMIT;
