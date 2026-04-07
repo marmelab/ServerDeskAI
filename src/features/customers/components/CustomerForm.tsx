@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useCreateCustomer, useUpdateCustomer } from "../hooks/useCustomers";
+import { useCreateCustomer } from "../hooks/useCreateCustomer";
+import { useUpdateCustomer } from "../hooks/useUpdateCustomer";
 import type { Customer } from "@/lib/types";
 
 const customerSchema = z.object({

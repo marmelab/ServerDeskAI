@@ -9,9 +9,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useCustomers } from "../hooks/useCustomers";
+import { useUserCompany } from "../hooks/useUserCompany";
 import { useAuthContext } from "@/features/auth/AuthProvider";
-import { supabase } from "@/lib/supabase";
-import { useQuery } from "@tanstack/react-query";
 import { CustomerForm } from "./CustomerForm";
 import type { Customer } from "@/lib/types";
 
@@ -21,21 +20,8 @@ export const CustomerList = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
 
-  // Get the CM's company ID
-  const { data: userCompany } = useQuery({
-    queryKey: ["user-company", user?.id],
-    queryFn: async () => {
-      if (!user) throw new Error("Not authenticated");
-      const { data, error } = await supabase
-        .from("user_companies")
-        .select("company_id")
-        .eq("user_id", user.id)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
+  const { data: userCompany } = useUserCompany(user?.id);
+  const companyId = userCompany?.company_id;
 
   if (isLoading) {
     return <p className="text-muted-foreground">Loading customers...</p>;
@@ -44,8 +30,6 @@ export const CustomerList = () => {
   if (isError) {
     return <p className="text-destructive">{error.message}</p>;
   }
-
-  const companyId = userCompany?.company_id;
 
   return (
     <div className="space-y-4">
