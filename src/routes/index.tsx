@@ -8,6 +8,7 @@ import { SignupForm } from "@/features/auth/components/SignupForm";
 import { CompanyList } from "@/features/companies/components/CompanyList";
 import { CompanyDetail } from "@/features/companies/components/CompanyDetail";
 import { AgentList } from "@/features/agents/components/AgentList";
+import { CustomerList } from "@/features/customers/components/CustomerList";
 
 export const router = createBrowserRouter([
   {
@@ -51,7 +52,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: "/customers",
-                element: <div>Customers — coming soon</div>,
+                element: <CustomerList />,
               },
             ],
           },
