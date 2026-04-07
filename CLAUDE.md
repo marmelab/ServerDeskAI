@@ -102,6 +102,10 @@ tests/
 - Use React Router for routing.
 - Use Tanstack Query (React Query) for server state management.
 - Form validation with zod + react-hook-form.
+- Import zod consistently as `import { z } from "zod"` across all files (not `"zod/v4"`).
+- Use Supabase generated types (`TablesInsert<>`, `TablesUpdate<>`) for mutation payloads — avoid duplicating column shapes manually.
+- Never use `as unknown as T` double casts — fix the query or type definition instead.
+- Prefer single joined queries over N+1 loops (e.g., fetch all related rows with `.in()` instead of per-item queries in a `for` loop).
 
 ## Linting
 
@@ -143,6 +147,26 @@ tests/
 - Use Edge Functions for email webhook processing and sending.
 - Migrations go in `supabase/migrations/` with descriptive names.
 - Run `supabase db push` to apply migrations locally, `supabase db reset` to reset.
+
+### RLS Security Rules
+
+- **Never use `USING (true)`** on SELECT policies — this exposes the entire table to any authenticated user. Scope policies to the user's role or use a `SECURITY DEFINER` function for controlled access.
+- **Always add `WITH CHECK` on UPDATE/INSERT policies** to restrict which columns/values can be written. RLS cannot restrict individual columns, so use `SECURITY DEFINER` functions for column-level control (e.g., letting users update only their `name`, not their `role`).
+- **Validate security-sensitive data server-side**, never client-side only. Invite tokens, role assignments, and access grants must be verified in database triggers or RPC functions, not just in the frontend.
+- **Prevent sender impersonation** — INSERT policies on message tables must enforce `sender_type` and `sender_id = auth.uid()` via `WITH CHECK`.
+- **Protect against race conditions** — use partial unique indexes or advisory locks for critical uniqueness guarantees (e.g., only one admin can exist via auto-signup).
+- **Add `updated_at` triggers** — never rely on client-side timestamps. Create a reusable `set_updated_at()` trigger function for all tables with `updated_at` columns.
+- **Keep schema in sync with CLAUDE.md** — if the data model spec says a column exists, the migration must include it. Flag deviations explicitly.
+
+## Error Handling
+
+- **Always check Supabase `.error`** — every Supabase query/mutation returns `{ data, error }`. Never destructure only `data` and ignore `error`.
+- **Always add `.catch()` to standalone promises** — especially `getSession()`, `getUser()`, and any async call in `useEffect`. An uncaught rejection can leave the app stuck permanently.
+- **Always wrap `mutateAsync()` in try/catch** — or use `mutate()` instead. If using `mutateAsync`, catch the error and let React Query's error state handle display. Show `mutation.error?.message` in the UI.
+- **Never use `!` (non-null assertion) on auth data** — `getUser()` can return `null` when the session expires. Always check for null and throw a meaningful error.
+- **Always render error states from queries** — destructure `isError`/`error` from `useQuery` and display them. Never show "No data" when the actual problem is a failed query.
+- **Handle `signOut` errors** — async functions used as `onClick` handlers must catch rejections.
+- **Use atomic operations for multi-step mutations** — delete-then-insert patterns must be wrapped in an RPC/transaction. A partial failure should not leave data in an inconsistent state.
 
 ## Commands
 
