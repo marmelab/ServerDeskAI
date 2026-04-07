@@ -72,6 +72,13 @@ describe("updateCustomer", () => {
     expect(chain.update).toHaveBeenCalledWith({ name: "Alice Updated", email: "a@x.com" });
     expect(chain.eq).toHaveBeenCalledWith("id", "c1");
   });
+
+  it("throws on error", async () => {
+    mockFrom.mockReturnValue(makeChain({ data: null, error: { message: "Not found" } }));
+    await expect(updateCustomer({ id: "c1", name: "Alice", email: "a@x.com" })).rejects.toEqual({
+      message: "Not found",
+    });
+  });
 });
 
 describe("fetchUserCompany", () => {

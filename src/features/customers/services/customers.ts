@@ -47,6 +47,11 @@ export const updateCustomer = async ({
   return data;
 };
 
+/**
+ * Returns the company assigned to the given user.
+ * Intended for customer managers, who are assigned to exactly one company.
+ * Agents may belong to multiple companies and should not use this function.
+ */
 export const fetchUserCompany = async (userId: string): Promise<{ company_id: string }> => {
   const { data, error } = await supabase
     .from("user_companies")
