@@ -5,6 +5,7 @@ import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
 import { RoleGuard } from "@/features/auth/components/RoleGuard";
 import { LoginForm } from "@/features/auth/components/LoginForm";
 import { SignupForm } from "@/features/auth/components/SignupForm";
+import { CompanyList } from "@/features/companies/components/CompanyList";
 
 export const router = createBrowserRouter([
   {
@@ -31,7 +32,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: "/companies",
-                element: <div>Companies — coming soon</div>,
+                element: <CompanyList />,
               },
               {
                 path: "/agents",
